@@ -1,0 +1,18 @@
+# Segreti — non committare mai
+.env
+*.pem
+*.key
+secrets/
+
+# Dati/volumi Docker se montati localmente invece che come named volume
+database/
+data/
+media/
+templates/
+certs/
+custom-templates/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
