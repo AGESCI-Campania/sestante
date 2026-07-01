@@ -114,4 +114,4 @@ entries:
     identifiers:
       name: default-authentication-identification
     attrs:
-      recovery_flow: !KeyOf recovery-flow
+      recovery_flow: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
