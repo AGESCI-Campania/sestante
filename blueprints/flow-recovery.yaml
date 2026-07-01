@@ -1,0 +1,117 @@
+version: 1
+metadata:
+  name: Sestante - Recovery Flow
+
+entries:
+  - model: authentik_flows.flow
+    id: recovery-flow
+    identifiers:
+      slug: default-recovery-flow
+    attrs:
+      name: Recovery Flow
+      title: Reset della password
+      designation: recovery
+      authentication: require_unauthenticated
+
+  - model: authentik_stages_email.emailstage
+    id: stage-recovery-email
+    identifiers:
+      name: default-recovery-email
+    attrs:
+      use_global_settings: true
+      template: email/password_reset.html
+      activate_user_on_success: true
+      token_expiry: 30
+
+  - model: authentik_stages_prompt.prompt
+    id: prompt-password
+    identifiers:
+      name: default-recovery-field-password
+    attrs:
+      field_key: password
+      label: Password
+      type: password
+      required: true
+      order: 0
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.prompt
+    id: prompt-password-repeat
+    identifiers:
+      name: default-recovery-field-password-repeat
+    attrs:
+      field_key: password_repeat
+      label: Password (repeat)
+      type: password
+      required: true
+      order: 1
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.promptstage
+    id: stage-recovery-prompt
+    identifiers:
+      name: default-recovery-prompt
+    attrs:
+      fields:
+        - !KeyOf prompt-password
+        - !KeyOf prompt-password-repeat
+
+  - model: authentik_stages_user_write.userwritestage
+    id: stage-recovery-user-write
+    identifiers:
+      name: default-recovery-user-write
+    attrs:
+      user_creation_mode: never_create
+
+  - model: authentik_stages_user_login.userloginstage
+    id: stage-recovery-login
+    identifiers:
+      name: default-authentication-login
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery-flow
+      order: 10
+    attrs:
+      stage: !KeyOf stage-recovery-email
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery-flow
+      order: 20
+    attrs:
+      stage: !KeyOf stage-recovery-prompt
+      evaluate_on_plan: false
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery-flow
+      order: 30
+    attrs:
+      stage: !KeyOf stage-recovery-user-write
+      evaluate_on_plan: false
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery-flow
+      order: 100
+    attrs:
+      stage: !KeyOf stage-recovery-login
+      evaluate_on_plan: false
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_stages_identification.identificationstage
+    identifiers:
+      name: default-authentication-identification
+    attrs:
+      recovery_flow: !KeyOf recovery-flow

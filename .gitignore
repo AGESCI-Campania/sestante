@@ -12,6 +12,9 @@ templates/
 certs/
 custom-templates/
 
+# File temporanei locali
+tmp/
+
 # OS / editor
 .DS_Store
 .idea/
