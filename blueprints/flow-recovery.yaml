@@ -55,8 +55,8 @@ entries:
       name: default-recovery-prompt
     attrs:
       fields:
-        - !KeyOf prompt-password
-        - !KeyOf prompt-password-repeat
+        - !Find [authentik_stages_prompt.prompt, [name, default-recovery-field-password]]
+        - !Find [authentik_stages_prompt.prompt, [name, default-recovery-field-password-repeat]]
 
   - model: authentik_stages_user_write.userwritestage
     id: stage-recovery-user-write
@@ -72,40 +72,40 @@ entries:
 
   - model: authentik_flows.flowstagebinding
     identifiers:
-      target: !KeyOf recovery-flow
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       order: 10
     attrs:
-      stage: !KeyOf stage-recovery-email
+      stage: !Find [authentik_stages_email.emailstage, [name, default-recovery-email]]
       evaluate_on_plan: true
       re_evaluate_policies: false
       invalid_response_action: retry
 
   - model: authentik_flows.flowstagebinding
     identifiers:
-      target: !KeyOf recovery-flow
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       order: 20
     attrs:
-      stage: !KeyOf stage-recovery-prompt
+      stage: !Find [authentik_stages_prompt.promptstage, [name, default-recovery-prompt]]
       evaluate_on_plan: false
       re_evaluate_policies: false
       invalid_response_action: retry
 
   - model: authentik_flows.flowstagebinding
     identifiers:
-      target: !KeyOf recovery-flow
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       order: 30
     attrs:
-      stage: !KeyOf stage-recovery-user-write
+      stage: !Find [authentik_stages_user_write.userwritestage, [name, default-recovery-user-write]]
       evaluate_on_plan: false
       re_evaluate_policies: false
       invalid_response_action: retry
 
   - model: authentik_flows.flowstagebinding
     identifiers:
-      target: !KeyOf recovery-flow
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       order: 100
     attrs:
-      stage: !KeyOf stage-recovery-login
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
       evaluate_on_plan: false
       re_evaluate_policies: false
       invalid_response_action: retry
