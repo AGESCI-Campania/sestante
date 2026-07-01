@@ -1,0 +1,7 @@
+services:
+  server:
+    volumes:
+      - ./blueprints:/blueprints/local
+  worker:
+    volumes:
+      - ./blueprints:/blueprints/local

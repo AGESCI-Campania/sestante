@@ -1,0 +1,15 @@
+metadata:
+  name: Sestante - Gruppi globali
+version: 1
+entries:
+  - model: authentik_core.group
+    identifiers:
+      name: admin-multipiattaforma
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: segreteria
+    attrs:
+      is_superuser: false
