@@ -11,7 +11,7 @@ entries:
       name: Recovery Flow
       title: Reset della password
       designation: recovery
-      authentication: require_unauthenticated
+      authentication: require_superuser
 
   - model: authentik_stages_identification.identificationstage
     id: stage-recovery-identification
