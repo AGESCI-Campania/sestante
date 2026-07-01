@@ -13,6 +13,15 @@ entries:
       designation: recovery
       authentication: require_unauthenticated
 
+  - model: authentik_stages_identification.identificationstage
+    id: stage-recovery-identification
+    identifiers:
+      name: default-recovery-identification
+    attrs:
+      user_fields:
+        - email
+      pretend_user_exists: true
+
   - model: authentik_stages_email.emailstage
     id: stage-recovery-email
     identifiers:
@@ -75,7 +84,7 @@ entries:
       target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       order: 10
     attrs:
-      stage: !Find [authentik_stages_email.emailstage, [name, default-recovery-email]]
+      stage: !Find [authentik_stages_identification.identificationstage, [name, default-recovery-identification]]
       evaluate_on_plan: true
       re_evaluate_policies: false
       invalid_response_action: retry
@@ -83,7 +92,7 @@ entries:
   - model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
-      order: 20
+      order: 30
     attrs:
       stage: !Find [authentik_stages_prompt.promptstage, [name, default-recovery-prompt]]
       evaluate_on_plan: true
@@ -93,7 +102,7 @@ entries:
   - model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
-      order: 30
+      order: 40
     attrs:
       stage: !Find [authentik_stages_user_write.userwritestage, [name, default-recovery-user-write]]
       evaluate_on_plan: true
