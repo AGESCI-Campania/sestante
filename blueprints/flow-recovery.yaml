@@ -11,7 +11,7 @@ entries:
       name: Recovery Flow
       title: Reset della password
       designation: recovery
-      authentication: require_superuser
+      authentication: none
 
   - model: authentik_stages_identification.identificationstage
     id: stage-recovery-identification
@@ -85,6 +85,16 @@ entries:
       order: 10
     attrs:
       stage: !Find [authentik_stages_identification.identificationstage, [name, default-recovery-identification]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
+      order: 20
+    attrs:
+      stage: !Find [authentik_stages_email.emailstage, [name, default-recovery-email]]
       evaluate_on_plan: true
       re_evaluate_policies: false
       invalid_response_action: retry
