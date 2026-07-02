@@ -12,6 +12,8 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       client_type: confidential
+      grant_types:
+        - authorization_code
       sub_mode: hashed_user_id
       redirect_uris:
         - url: "https://plancia.agescicampania.org/accounts/oidc/sestante/login/callback/"
