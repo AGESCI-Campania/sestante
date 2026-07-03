@@ -11,8 +11,8 @@ entries:
       branding_logo: /media/logo.svg
       branding_favicon: /media/favicon.png
       default_locale: it
-      flow_background: /media/background.jpeg
-      custom_css: |
+      branding_default_flow_background: /media/background.jpeg
+      branding_custom_css: |
         :root {
           --ak-accent: #7a1e99;
           --pf-global--primary-color--100: #7a1e99;
