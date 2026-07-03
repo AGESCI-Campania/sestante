@@ -35,3 +35,4 @@ entries:
       slug: plancia
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, Plancia AGESCI Campania]]
       policy_engine_mode: any
+      meta_launch_url: "https://plancia.agescicampania.org/accounts/oidc/sestante/login/?next=/"
