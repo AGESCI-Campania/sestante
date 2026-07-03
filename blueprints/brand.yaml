@@ -1,0 +1,20 @@
+version: 1
+metadata:
+  name: Brand — Piattaforme Regionali Scout Campania
+entries:
+  - model: authentik_brands.brand
+    state: present
+    identifiers:
+      domain: auth.agescicampania.org
+    attrs:
+      branding_title: "Piattaforme Regionali Scout Campania"
+      branding_logo: /media/logo.svg
+      branding_favicon: /media/favicon.png
+      default_locale: it
+      flow_background: /media/background.jpeg
+      custom_css: |
+        :root {
+          --ak-accent: #7a1e99;
+          --pf-global--primary-color--100: #7a1e99;
+          --pf-global--primary-color--200: #622599;
+        }

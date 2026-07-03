@@ -2,6 +2,8 @@ services:
   server:
     volumes:
       - ./blueprints:/blueprints/local
+      - ./media:/media
   worker:
     volumes:
       - ./blueprints:/blueprints/local
+      - ./media:/media
