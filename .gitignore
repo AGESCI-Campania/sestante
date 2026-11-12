@@ -19,3 +19,6 @@ tmp/
 .DS_Store
 .idea/
 .vscode/
+
+# Backup del database creati da scripts/aggiorna.sh
+backups/

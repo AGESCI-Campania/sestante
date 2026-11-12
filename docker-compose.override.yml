@@ -3,7 +3,18 @@ services:
     volumes:
       - ./blueprints:/blueprints/local
       - ./media:/media
+    networks:
+      default:
+      # Rete condivisa con Caddy (repo agesci-campania-web-frontend): il traffico pubblico
+      # arriva da qui. Vedi docs/INTEGRAZIONE.md in quel repo.
+      agesci-proxy:
+        aliases:
+          - sestante-server
   worker:
     volumes:
       - ./blueprints:/blueprints/local
       - ./media:/media
+
+networks:
+  agesci-proxy:
+    external: true

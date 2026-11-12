@@ -36,6 +36,20 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   (Blueprints YAML di Authentik, o script idempotenti), non come click manuali in UI non
   documentati — coerente con lo spirito "tutto tracciabile in git" degli altri progetti.
 
+## Deploy e aggiornamento (da 2026-11)
+
+- Server dedicato alle piattaforme `*.agescicampania.org`, repo clonato in `/opt/sestante`.
+- Reverse proxy: Caddy dal repo `AGESCI-Campania/agesci-campania-web-frontend`, rete Docker
+  esterna `agesci-proxy` (alias `sestante-server`, in `docker-compose.override.yml`). Le regole
+  sono in `docs/INTEGRAZIONE.md` di quel repo.
+- `scripts/installa.sh` — prima installazione; `scripts/aggiorna.sh` — aggiornamento (backup DB,
+  allineamento `AUTHENTIK_TAG` al default di `docker-compose.yml`, riapplicazione blueprint).
+  Funzioni condivise in `scripts/_comune.sh` (copia identica di quello del repo frontend) e
+  `scripts/_sestante.sh` (elenco blueprint, risorse media).
+- Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
+- Nuova versione di Authentik: riscaricare il compose ufficiale (punto 1 sotto), aggiornare
+  `AUTHENTIK_TAG` in `.env.template`, commit e push, poi `scripts/aggiorna.sh` sul server.
+
 ## Task operativi — Fase 0 (deploy base, nessuna piattaforma ancora collegata)
 
 Segui l'ordine; verifica sempre la documentazione ufficiale corrente

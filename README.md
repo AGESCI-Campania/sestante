@@ -17,9 +17,21 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
   dei ruoli, roadmap, decisioni prese)
 - `CLAUDE.md` — riferimento operativo per la continuità con Claude Code
 
+## Installazione e aggiornamento
+
+Prerequisito: [agesci-campania-web-frontend](https://github.com/AGESCI-Campania/agesci-campania-web-frontend)
+installato sul server (reverse proxy Caddy e rete `agesci-proxy`).
+
+```bash
+git clone git@github.com:AGESCI-Campania/sestante.git /opt/sestante
+/opt/sestante/scripts/installa.sh    # prima installazione
+/opt/sestante/scripts/aggiorna.sh    # aggiornamenti successivi
+```
+
 ## Stato
 
-Fase 0 (deploy base) in corso. Nessuna piattaforma ancora collegata.
+Istanza di test validata (Plancia collegata via OIDC); reinstallazione pulita su server
+dedicato in preparazione (vedi `TODO.md`, sezione 0).
 
 ## Piattaforme collegate
 

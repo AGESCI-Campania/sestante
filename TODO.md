@@ -15,22 +15,22 @@ upgrade intermedio (2026.5.x → 2026.8.x) necessario.
 
 ### Task
 
+Reverse proxy: **Caddy** dal repo `AGESCI-Campania/agesci-campania-web-frontend`, rete Docker
+condivisa `agesci-proxy` (contratto in `docs/INTEGRAZIONE.md` di quel repo).
+
 - [ ] DNS: puntare `auth.agescicampania.org` al nuovo server
-- [ ] Reverse proxy (da scegliere per il nuovo server, condiviso con le altre piattaforme):
-      TLS, proxy verso `127.0.0.1:9000`, supporto WebSocket, header `X-Forwarded-Proto/Host/For`
-- [ ] `git clone` del repo, poi `.env` da `.env.template` con segreti **nuovi**
-      (`openssl rand -base64`, non riusare quelli dell'istanza di test)
-- [ ] `media/`: copiare logo, favicon e background da `resources/` (la cartella è in `.gitignore`)
-- [ ] `docker compose pull && docker compose up -d`, verificare `healthy` di postgresql/server/worker
-- [ ] Verificare che il reverse proxy si colleghi da una rete in
-      `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` (default: reti private + loopback). Test: la UI
-      admin carica senza errori mixed content e i redirect OIDC sono `https://`
+- [ ] Installare per primo il frontend: `/opt/agesci-campania-web-frontend/scripts/installa.sh`
+      (crea la rete `agesci-proxy`; `caddy/sites/sestante.caddy` è già presente)
+- [ ] `git clone` in `/opt/sestante`, poi `scripts/installa.sh`: genera `.env` con segreti
+      nuovi, copia le immagini in `media/`, avvia, attende healthy, applica i blueprint,
+      stampa la password iniziale di `akadmin`
+- [ ] Compilare `AUTHENTIK_EMAIL__*` in `.env` e `docker compose up -d`
 - [ ] Verificare in Admin → System → Settings che il Base URL sia `https://auth.agescicampania.org`
+      e che la UI carichi senza mixed content (header da Caddy accettati: rete privata Docker)
 - [ ] Creare gli account amministratore nominali (2-3 persone, non `akadmin`)
-- [ ] Applicare i blueprint: `groups-global`, `flow-recovery`, `flow-authn-mfa`, `brand`,
-      `provider-plancia`
 - [ ] Controllo visivo del branding: in 2026.8 il CSS personalizzato è gestito con cascade
-      layers e lo sfondo dei flow è cambiato — verificare `branding_custom_css` e background
+      layers e lo sfondo dei flow è cambiato — verificare `branding_custom_css` e background;
+      verificare anche che i file in `/media` siano serviti (in 2026.x lo storage è sotto `/data`)
 - [ ] Test MFA: enrollment e login con TOTP, WebAuthn, codici di backup
 - [ ] **Plancia**: `client_id` e `client_secret` del Provider vengono rigenerati con la nuova
       installazione → aggiornare `SOCIAL_SESTANTE_CLIENT_ID/SECRET` nel `.env.prod` di Plancia
@@ -45,8 +45,9 @@ upgrade intermedio (2026.5.x → 2026.8.x) necessario.
 - WebAuthn: rimossa l'opzione `prevent_duplicate_devices` (non usata nei nostri blueprint)
 - `hash_password` non accetta più la password come argomento posizionale
 - `AUTHENTIK_POSTGRESQL__CONN_OPTIONS` deprecata (non usata)
-- Per i futuri upgrade: riscaricare il compose ufficiale, passare all'ultima patch della
-  minor corrente prima di salire alla successiva, backup del DB prima (niente downgrade)
+- Per i futuri upgrade: riscaricare il compose ufficiale nel repo (cambia il tag di default),
+  commit e push, poi `scripts/aggiorna.sh` sul server (backup DB automatico, niente downgrade).
+  Passare all'ultima patch della minor corrente prima di salire alla successiva.
 
 ---
 
