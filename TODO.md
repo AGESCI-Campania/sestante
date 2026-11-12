@@ -5,6 +5,51 @@ può essere implementata nell'ordine preferito, salvo i prerequisiti segnalati.
 
 ---
 
+## 0. Deploy su nuovo server dedicato (prerequisito di tutto il resto)
+
+**Contesto**: l'istanza su `admin.agescicampania.org` (Virtualmin + Apache, Authentik 2026.5.3)
+è stata usata solo per test. Sestante viene reinstallato da zero su un nuovo server dedicato
+alle piattaforme `*.agescicampania.org` (Sestante, Plancia, nota spese, Tana, …), senza Virtualmin.
+Nessun dato da migrare: installazione pulita direttamente su **2026.8.5**, nessun percorso di
+upgrade intermedio (2026.5.x → 2026.8.x) necessario.
+
+### Task
+
+- [ ] DNS: puntare `auth.agescicampania.org` al nuovo server
+- [ ] Reverse proxy (da scegliere per il nuovo server, condiviso con le altre piattaforme):
+      TLS, proxy verso `127.0.0.1:9000`, supporto WebSocket, header `X-Forwarded-Proto/Host/For`
+- [ ] `git clone` del repo, poi `.env` da `.env.template` con segreti **nuovi**
+      (`openssl rand -base64`, non riusare quelli dell'istanza di test)
+- [ ] `media/`: copiare logo, favicon e background da `resources/` (la cartella è in `.gitignore`)
+- [ ] `docker compose pull && docker compose up -d`, verificare `healthy` di postgresql/server/worker
+- [ ] Verificare che il reverse proxy si colleghi da una rete in
+      `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` (default: reti private + loopback). Test: la UI
+      admin carica senza errori mixed content e i redirect OIDC sono `https://`
+- [ ] Verificare in Admin → System → Settings che il Base URL sia `https://auth.agescicampania.org`
+- [ ] Creare gli account amministratore nominali (2-3 persone, non `akadmin`)
+- [ ] Applicare i blueprint: `groups-global`, `flow-recovery`, `flow-authn-mfa`, `brand`,
+      `provider-plancia`
+- [ ] Controllo visivo del branding: in 2026.8 il CSS personalizzato è gestito con cascade
+      layers e lo sfondo dei flow è cambiato — verificare `branding_custom_css` e background
+- [ ] Test MFA: enrollment e login con TOTP, WebAuthn, codici di backup
+- [ ] **Plancia**: `client_id` e `client_secret` del Provider vengono rigenerati con la nuova
+      installazione → aggiornare `SOCIAL_SESTANTE_CLIENT_ID/SECRET` nel `.env.prod` di Plancia
+- [ ] Test login SSO Plancia → Sestante end-to-end
+- [ ] Spegnere i container Sestante sul vecchio server (`docker compose down`) una volta
+      validato il nuovo
+
+### Note di versione (2026.5 → 2026.8) rilevanti per noi
+
+- `AUTHENTIK_WEB__BASE_URL` nuova, obbligatoria da 2026.11 — già in `.env.template`
+- Header `X-Forwarded-*` accettati solo da proxy fidati (vedi sopra)
+- WebAuthn: rimossa l'opzione `prevent_duplicate_devices` (non usata nei nostri blueprint)
+- `hash_password` non accetta più la password come argomento posizionale
+- `AUTHENTIK_POSTGRESQL__CONN_OPTIONS` deprecata (non usata)
+- Per i futuri upgrade: riscaricare il compose ufficiale, passare all'ultima patch della
+  minor corrente prima di salire alla successiva, backup del DB prima (niente downgrade)
+
+---
+
 ## 1. Flusso di Auto-Registrazione (Enrollment)
 
 **Obiettivo**: Permettere agli utenti di crearsi un account su Sestante autonomamente,
@@ -357,7 +402,7 @@ Le redirect URI per tutti i provider seguono il pattern:
         enrollment_flow: !Find [authentik_flows.flow, [slug, default-source-enrollment]]
   ```
 
-  > Nota: verificare la sintassi `!Env` nel OIDC URL sul campo stringa nella versione 2026.5.x;
+  > Nota: verificare la sintassi `!Env` nel OIDC URL sul campo stringa nella versione installata;
   > in alternativa, inserire il tenant ID direttamente nella stringa URL.
 
 ---
@@ -481,7 +526,7 @@ Dopo `docker compose up -d`, i file saranno raggiungibili a:
         # Colori: impostare tramite custom_css (vedi sotto) o lasciare default
   ```
 
-  > Verificare il model name esatto per 2026.5.x: potrebbe essere
+  > Verificare il model name esatto per la versione installata: potrebbe essere
   > `authentik_brands.brand` o `authentik_tenants.tenant`. Controllare via
   > `docker compose exec server ak shell -c "from authentik_brands.models import Brand; print(Brand)"`.
 
@@ -514,6 +559,7 @@ Nel campo **Custom CSS** del Brand (via UI o aggiunto all'attrs del Blueprint):
 
 ## Ordine di esecuzione consigliato
 
+0. **Deploy su nuovo server** (sezione 0) — prerequisito per tutto il resto
 1. **Branding** (Step 1 + docker-compose) — impatto zero sui flussi esistenti
 2. **Enrollment flow** — dopo aver deciso libero vs su invito
 3. **Import utenti Plancia** — coordinare con Plancia per accesso al DB
