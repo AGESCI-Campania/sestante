@@ -77,7 +77,7 @@ cat <<EOF
 Passi successivi:
   1. In agesci-campania-web-frontend deve esistere caddy/sites/sestante.caddy
      (poi /opt/agesci-campania-web-frontend/scripts/aggiorna.sh)
-  2. https://auth.agescicampania.org — login come akadmin, creare gli amministratori
+  2. https://auth.agescicampania.net — login come akadmin, creare gli amministratori
      nominali (2-3 persone, nel gruppo admin), poi non usare più akadmin
   3. Provider Plancia: copiare client_id e client_secret nuovi nel .env.prod di Plancia
      (Applications → Providers → Plancia AGESCI Campania)

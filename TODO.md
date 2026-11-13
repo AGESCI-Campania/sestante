@@ -9,7 +9,9 @@ può essere implementata nell'ordine preferito, salvo i prerequisiti segnalati.
 
 **Contesto**: l'istanza su `admin.agescicampania.org` (Virtualmin + Apache, Authentik 2026.5.3)
 è stata usata solo per test. Sestante viene reinstallato da zero su un nuovo server dedicato
-alle piattaforme `*.agescicampania.org` (Sestante, Plancia, nota spese, Tana, …), senza Virtualmin.
+(Ubuntu 26.04, senza Virtualmin/Apache né altri proxy) alle piattaforme `*.agescicampania.net`
+(Sestante, Plancia, nota spese, Tana, …). Il dominio `agescicampania.org` è abbandonato
+(problema con il registrar): host, URL ed email passano tutti a `agescicampania.net`.
 Nessun dato da migrare: installazione pulita direttamente su **2026.8.5**, nessun percorso di
 upgrade intermedio (2026.5.x → 2026.8.x) necessario.
 
@@ -18,14 +20,16 @@ upgrade intermedio (2026.5.x → 2026.8.x) necessario.
 Reverse proxy: **Caddy** dal repo `AGESCI-Campania/agesci-campania-web-frontend`, rete Docker
 condivisa `agesci-proxy` (contratto in `docs/INTEGRAZIONE.md` di quel repo).
 
-- [ ] DNS: puntare `auth.agescicampania.org` al nuovo server
+- [ ] DNS: puntare `auth.agescicampania.net` al nuovo server
 - [ ] Installare per primo il frontend: `/opt/agesci-campania-web-frontend/scripts/installa.sh`
       (crea la rete `agesci-proxy`; `caddy/sites/sestante.caddy` è già presente)
 - [ ] `git clone` in `/opt/sestante`, poi `scripts/installa.sh`: genera `.env` con segreti
       nuovi, copia le immagini in `media/`, avvia, attende healthy, applica i blueprint,
       stampa la password iniziale di `akadmin`
-- [ ] Compilare `AUTHENTIK_EMAIL__*` in `.env` e `docker compose up -d`
-- [ ] Verificare in Admin → System → Settings che il Base URL sia `https://auth.agescicampania.org`
+- [ ] Compilare `AUTHENTIK_EMAIL__*` in `.env` e `docker compose up -d` — l'account SMTP
+      (`auth@agescicampania.org` sulla vecchia istanza) va ricreato su `agescicampania.net`,
+      con nuova App Password; mittente `sestante@agescicampania.net`
+- [ ] Verificare in Admin → System → Settings che il Base URL sia `https://auth.agescicampania.net`
       e che la UI carichi senza mixed content (header da Caddy accettati: rete privata Docker)
 - [ ] Creare gli account amministratore nominali (2-3 persone, non `akadmin`)
 - [ ] Controllo visivo del branding: in 2026.8 il CSS personalizzato è gestito con cascade
@@ -220,7 +224,7 @@ from django.dispatch import receiver
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
-SESTANTE_API = getattr(settings, "SESTANTE_API_URL", "https://auth.agescicampania.org")
+SESTANTE_API = getattr(settings, "SESTANTE_API_URL", "https://auth.agescicampania.net")
 SESTANTE_TOKEN = getattr(settings, "SESTANTE_SERVICE_TOKEN", "")
 
 
@@ -255,7 +259,7 @@ def sync_new_user_to_sestante(sender, instance, created, **kwargs):
 - Importare `sestante_sync` in `AppConfig.ready()` dell'app `accounts`
 - Aggiungere a `.env.prod`:
   ```
-  SESTANTE_API_URL=https://auth.agescicampania.org
+  SESTANTE_API_URL=https://auth.agescicampania.net
   SESTANTE_SERVICE_TOKEN=<token dal blueprint sa-plancia>
   ```
 
@@ -317,7 +321,7 @@ SCIM client per una sincronizzazione bidirezionale automatica senza codice custo
 Google, Microsoft o Apple, senza creare una password separata.
 
 Le redirect URI per tutti i provider seguono il pattern:
-`https://auth.agescicampania.org/source/oauth/callback/<slug>/`
+`https://auth.agescicampania.net/source/oauth/callback/<slug>/`
 
 ---
 
@@ -329,7 +333,7 @@ Le redirect URI per tutti i provider seguono il pattern:
 - [ ] Abilitare l'API "Google Identity" (OAuth 2.0)
 - [ ] Creare credenziali: **OAuth 2.0 Client ID** (tipo: "Web Application")
 - [ ] In "Authorized redirect URIs" aggiungere:
-  `https://auth.agescicampania.org/source/oauth/callback/google/`
+  `https://auth.agescicampania.net/source/oauth/callback/google/`
 - [ ] Scaricare/copiare **Client ID** e **Client Secret**
 - [ ] Aggiungere a `.env`: `SOCIAL_GOOGLE_CLIENT_ID=...` e `SOCIAL_GOOGLE_CLIENT_SECRET=...`
 
@@ -366,7 +370,7 @@ Le redirect URI per tutti i provider seguono il pattern:
   - Name: "Sestante SSO"
   - Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
     (o "single tenant" se solo account aziendali AGESCI)
-  - Redirect URI: `https://auth.agescicampania.org/source/oauth/callback/entra-id/`
+  - Redirect URI: `https://auth.agescicampania.net/source/oauth/callback/entra-id/`
 - [ ] Annotare **Application (client) ID** e **Directory (tenant) ID**
 - [ ] In **Certificates & Secrets** → New client secret → copiare subito il valore
   (mostrato una sola volta)
@@ -413,11 +417,11 @@ Le redirect URI per tutti i provider seguono il pattern:
 **Prerequisiti** — completare su [developer.apple.com](https://developer.apple.com):
 
 - [ ] **Creare App ID**:
-  - Identifier: es. `org.agescicampania.sestante`
+  - Identifier: es. `net.agescicampania.sestante`
   - Abilitare capability: "Sign In with Apple"
 - [ ] **Creare Services ID** (stesso nome dell'App ID):
   - Abilitare "Sign In with Apple"
-  - Configurare "Return URLs": `https://auth.agescicampania.org/source/oauth/callback/apple/`
+  - Configurare "Return URLs": `https://auth.agescicampania.net/source/oauth/callback/apple/`
 - [ ] **Creare Key**:
   - Abilitare "Sign in with Apple" e selezionare l'App ID
   - Scaricare il file `.p8` (solo una volta)
@@ -425,7 +429,7 @@ Le redirect URI per tutti i provider seguono il pattern:
 - [ ] Annotare **Team ID** (visibile nell'header del portale developer)
 - [ ] Aggiungere a `.env`:
   ```
-  SOCIAL_APPLE_SERVICES_ID=org.agescicampania.sestante     # Services ID
+  SOCIAL_APPLE_SERVICES_ID=net.agescicampania.sestante     # Services ID
   SOCIAL_APPLE_TEAM_ID=XXXXXXXXXX
   SOCIAL_APPLE_KEY_ID=XXXXXXXXXX
   # Contenuto del file .p8 (su una riga, senza header/footer)
@@ -457,7 +461,7 @@ Le redirect URI per tutti i provider seguono il pattern:
   ```
 
   > Nota: Apple richiede un dominio reale e registrato (no `.local`, no IP). Testare solo
-  > con `auth.agescicampania.org` live su HTTPS.
+  > con `auth.agescicampania.net` live su HTTPS.
 
 ---
 
@@ -502,8 +506,8 @@ cp resources/favicon.png media/favicon.png    # quando disponibile
 ```
 
 Dopo `docker compose up -d`, i file saranno raggiungibili a:
-- `https://auth.agescicampania.org/media/background.jpeg`
-- `https://auth.agescicampania.org/media/logo.svg`
+- `https://auth.agescicampania.net/media/background.jpeg`
+- `https://auth.agescicampania.net/media/logo.svg`
 
 ### Step 2 — Blueprint brand
 
@@ -517,7 +521,7 @@ Dopo `docker compose up -d`, i file saranno raggiungibili a:
     - model: authentik_brands.brand
       state: present
       identifiers:
-        domain: auth.agescicampania.org
+        domain: auth.agescicampania.net
       attrs:
         title: "Piattaforme Regionali Scout Campania"
         logo: /media/logo.svg

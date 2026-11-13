@@ -13,7 +13,8 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
 
 ## Decisioni prese (non rimetterle in discussione senza confermare con l'utente)
 
-- Nome: **Sestante**. Dominio previsto: `auth.agescicampania.org`.
+- Nome: **Sestante**. Dominio: `auth.agescicampania.net` (`agescicampania.org` abbandonato per un
+  problema con il registrar, prima della produzione: host, URL ed email sono tutti su `.net`).
 - Piattaforma pilota per la prima integrazione OIDC: **Plancia** (ha utenti reali; Catello non
   è mai stato usato in produzione, quindi non è un test realistico).
 - Due Gruppi Authentik per i ruoli globali: `admin-multipiattaforma` e `segreteria` — mappati
@@ -38,7 +39,8 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
 
 ## Deploy e aggiornamento (da 2026-11)
 
-- Server dedicato alle piattaforme `*.agescicampania.org`, repo clonato in `/opt/sestante`.
+- Server dedicato (Ubuntu 26.04, nessun Virtualmin/Apache) alle piattaforme
+  `*.agescicampania.net`, repo clonato in `/opt/sestante`.
 - Reverse proxy: Caddy dal repo `AGESCI-Campania/agesci-campania-web-frontend`, rete Docker
   esterna `agesci-proxy` (alias `sestante-server`, in `docker-compose.override.yml`). Le regole
   sono in `docs/INTEGRAZIONE.md` di quel repo.

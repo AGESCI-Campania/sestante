@@ -16,7 +16,7 @@ entries:
         - authorization_code
       sub_mode: hashed_user_id
       redirect_uris:
-        - url: "https://plancia.agescicampania.org/accounts/oidc/sestante/login/callback/"
+        - url: "https://plancia.agescicampania.net/accounts/oidc/sestante/login/callback/"
           matching_mode: strict
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [name, "authentik default OAuth Mapping: OpenID 'openid'"]]
@@ -35,4 +35,4 @@ entries:
       slug: plancia
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, Plancia AGESCI Campania]]
       policy_engine_mode: any
-      meta_launch_url: "https://plancia.agescicampania.org/accounts/oidc/sestante/login/?next=/"
+      meta_launch_url: "https://plancia.agescicampania.net/accounts/oidc/sestante/login/?next=/"

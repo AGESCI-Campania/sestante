@@ -38,7 +38,7 @@ nella sessione precedente.
 
 Sestante è un **servizio a sé**, con il proprio `docker-compose` (server + worker + PostgreSQL
 + Redis, come da immagine ufficiale Authentik), esposto su un proprio (sotto)dominio, es.
-`auth.agescicampania.org`. Non condivide database né processi con nessuna piattaforma — questo
+`auth.agescicampania.net`. Non condivide database né processi con nessuna piattaforma — questo
 è il punto centrale della decisione presa nella sessione precedente (§8bis.1 del documento
 Bussola): un problema in una piattaforma non deve poter compromettere l'accesso alle altre.
 
@@ -72,7 +72,7 @@ in precedenza.
 
 Le piattaforme usano già `django-allauth`. Si aggiunge il provider OIDC generico di allauth,
 puntato all'endpoint di discovery di Sestante
-(`https://auth.agescicampania.org/application/o/<slug-piattaforma>/.well-known/openid-configuration`).
+(`https://auth.agescicampania.net/application/o/<slug-piattaforma>/.well-known/openid-configuration`).
 
 Flusso al login:
 1. L'utente sceglie "Accedi con SSO AGESCI Campania" sulla piattaforma.
@@ -152,7 +152,7 @@ riconciliazione, non un semplice switch:
 ## 10. Decisioni prese
 
 1. **Nome definitivo**: **Sestante**.
-2. **Dominio**: `auth.agescicampania.org`.
+2. **Dominio**: `auth.agescicampania.net`.
 3. **Piattaforma pilota per la Fase 1**: **Plancia** — corretto rispetto alla prima ipotesi:
    Catello non è mai stato usato in produzione, quindi non ha utenti reali su cui validare
    davvero il pattern (login, provisioning, claim dei ruoli globali, migrazione per email).

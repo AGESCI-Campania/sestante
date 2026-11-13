@@ -8,10 +8,10 @@ entries:
       domain: authentik-default
     attrs:
       branding_title: "Piattaforme Regionali Scout Campania"
-      branding_logo: "https://auth.agescicampania.org/media/logo.png"
-      branding_favicon: "https://auth.agescicampania.org/media/favicon.png"
+      branding_logo: "https://auth.agescicampania.net/media/logo.png"
+      branding_favicon: "https://auth.agescicampania.net/media/favicon.png"
       default_locale: it
-      branding_default_flow_background: "https://auth.agescicampania.org/media/background.jpeg"
+      branding_default_flow_background: "https://auth.agescicampania.net/media/background.jpeg"
       branding_custom_css: |
         :root {
           --ak-accent: #7a1e99;
