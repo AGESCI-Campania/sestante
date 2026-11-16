@@ -11,6 +11,26 @@ entries:
     attrs:
       title: Accedi
 
+  # Nomi mostrati nella scelta del secondo fattore al primo accesso (friendly_name; di default
+  # "TOTP Device", "Static tokens", "WebAuthn device")
+  - model: authentik_stages_authenticator_totp.authenticatortotpstage
+    identifiers:
+      name: default-authenticator-totp-setup
+    attrs:
+      friendly_name: "App di autenticazione sul telefono (Google Authenticator, Microsoft Authenticator…)"
+
+  - model: authentik_stages_authenticator_webauthn.authenticatorwebauthnstage
+    identifiers:
+      name: default-authenticator-webauthn-setup
+    attrs:
+      friendly_name: "Passkey o chiave di sicurezza (impronta, Face ID, Windows Hello, chiavetta USB)"
+
+  - model: authentik_stages_authenticator_static.authenticatorstaticstage
+    identifiers:
+      name: default-authenticator-static-setup
+    attrs:
+      friendly_name: "Codici di recupero da stampare o salvare (di riserva)"
+
   - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
     identifiers:
       name: default-authentication-mfa-validation

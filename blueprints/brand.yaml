@@ -38,6 +38,17 @@ entries:
           max-width: 100% !important;
           max-height: 160px !important;
         }
+        /* Scelta del secondo fattore al primo accesso: la griglia di Authentik riserva la prima
+           colonna (2rem) a un'icona che qui manca, e il testo va a capo a ogni parola. La
+           descrizione ("Fase di configurazione dell'autenticatore…") è tecnica: nascosta, i
+           nomi sono in flow-authn-mfa.yaml. */
+        fieldset[name="stages"] .authenticator-button {
+          grid-template-columns: 1fr !important;
+          text-align: start;
+        }
+        fieldset[name="stages"] .authenticator-button .pf-c-form__helper-text {
+          display: none;
+        }
         /* Barra dell'amministrazione (ak-page-navbar) e dell'area utente /if/user */
         aside.brand .logo img,
         .pf-c-page__header-brand-link img.pf-c-brand {
