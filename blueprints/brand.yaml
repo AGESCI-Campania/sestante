@@ -7,6 +7,10 @@ entries:
     identifiers:
       domain: authentik-default
     attrs:
+      # Unico brand dell'istanza: deve essere quello di default, altrimenti per
+      # auth.agescicampania.net (che non corrisponde a "authentik-default") Authentik usa un
+      # brand vuoto interno — senza logo, CSS e flow di recupero.
+      default: true
       branding_title: "Piattaforme Regionali Scout Campania"
       branding_logo: "https://auth.agescicampania.net/media/logo.png"
       branding_favicon: "https://auth.agescicampania.net/media/favicon.png"
