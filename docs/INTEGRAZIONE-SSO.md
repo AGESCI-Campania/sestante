@@ -244,9 +244,12 @@ Ogni piattaforma, anche quelle esistenti reinstallate da zero, segue la stessa s
    `scripts/installa.sh`, blocco `caddy/sites/<progetto>.caddy`.
 2. L'utente aggiunge/aggiorna `blueprints/provider-<slug>.yaml` in `sestante` e lancia
    `scripts/aggiorna.sh` di Sestante.
-3. L'utente copia client id e secret nel `.env` della piattaforma; `installa.sh` della
-   piattaforma deve elencarli tra i passi manuali residui se sono vuoti, e l'app deve
-   avviarsi anche senza (pulsante SSO nascosto o disabilitato), non andare in errore.
+3. L'utente copia client id e secret nel `.env` della piattaforma. Si trovano in
+   <https://auth.agescicampania.net/if/admin/#/core/providers> → `<Nome> AGESCI Campania` →
+   modifica. Le istruzioni di installazione della piattaforma devono indicare questo passo
+   (con quel percorso e i nomi delle variabili); `installa.sh` della piattaforma deve
+   elencarli tra i passi manuali residui se sono vuoti, e l'app deve avviarsi anche senza
+   (pulsante SSO nascosto o disabilitato), non andare in errore.
 4. Login SSO di prova end-to-end, con un utente nuovo e uno già esistente (collegamento per
    email), uno nel gruppo `segreteria` e uno senza gruppi.
 
