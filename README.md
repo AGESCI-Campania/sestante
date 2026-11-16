@@ -16,6 +16,9 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
 - `Sestante_Progettazione.md` — documento di progettazione completo (architettura, modello
   dei ruoli, roadmap, decisioni prese)
 - `CLAUDE.md` — riferimento operativo per la continuità con Claude Code
+- [`docs/INTEGRAZIONE-SSO.md`](docs/INTEGRAZIONE-SSO.md) — **come collegare una piattaforma a
+  Sestante** (da dare agli agenti degli altri repo:
+  <https://raw.githubusercontent.com/AGESCI-Campania/sestante/main/docs/INTEGRAZIONE-SSO.md>)
 
 ## Installazione e aggiornamento
 
@@ -23,7 +26,7 @@ Prerequisito: [agesci-campania-web-frontend](https://github.com/AGESCI-Campania/
 installato sul server (reverse proxy Caddy e rete `agesci-proxy`).
 
 ```bash
-git clone git@github.com:AGESCI-Campania/sestante.git /opt/sestante
+git clone https://github.com/AGESCI-Campania/sestante.git /opt/sestante
 /opt/sestante/scripts/installa.sh    # prima installazione
 /opt/sestante/scripts/aggiorna.sh    # aggiornamenti successivi
 ```

@@ -46,9 +46,14 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   sono in `docs/INTEGRAZIONE.md` di quel repo.
 - `scripts/installa.sh` — prima installazione; `scripts/aggiorna.sh` — aggiornamento (backup DB,
   allineamento `AUTHENTIK_TAG` al default di `docker-compose.yml`, riapplicazione blueprint).
+  Entrambi installano/aggiornano la unit systemd `sestante.service` (dopo quella del proxy)
+  con `installa_servizio_systemd`; senza sudo stampano il comando per l'amministratore.
   Funzioni condivise in `scripts/_comune.sh` (copia identica di quello del repo frontend) e
   `scripts/_sestante.sh` (elenco blueprint, risorse media).
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
+- Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
+  agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se
+  cambia una regola qui, aggiornarlo nello stesso commit.
 - Nuova versione di Authentik: riscaricare il compose ufficiale (punto 1 sotto), aggiornare
   `AUTHENTIK_TAG` in `.env.template`, commit e push, poi `scripts/aggiorna.sh` sul server.
 
