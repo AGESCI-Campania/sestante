@@ -42,3 +42,34 @@ entries:
       configuration_stages:
         - !Find [authentik_stages_authenticator_totp.authenticatortotpstage, [name, "default-authenticator-totp-setup"]]
         - !Find [authentik_stages_authenticator_webauthn.authenticatorwebauthnstage, [name, "default-authenticator-webauthn-setup"]]
+
+  # --- Accesso con passkey senza password ---
+  # Nella pagina di login il browser propone le passkey salvate (compilazione automatica del
+  # campo utente). Con una passkey il flow di default salta password e secondo fattore: la
+  # passkey richiede già la verifica dell'utente (impronta, Face ID, PIN), imposta qui.
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: sestante-passkey-login
+    identifiers:
+      name: sestante-passkey-login
+    attrs:
+      device_classes:
+        - webauthn
+      webauthn_user_verification: required
+      not_configured_action: deny
+
+  - model: authentik_stages_identification.identificationstage
+    identifiers:
+      name: default-authentication-identification
+    attrs:
+      webauthn_stage: !KeyOf sestante-passkey-login
+
+  # La regola di default che salta il secondo fattore dopo un accesso con passkey
+  # (auth_method == auth_webauthn_pwl) va rivalutata al momento della fase: valutata solo alla
+  # creazione del piano, prima del login, chiederebbe comunque il secondo fattore.
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      order: 30
+      target: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, default-authentication-mfa-validation]]
+    attrs:
+      re_evaluate_policies: true
