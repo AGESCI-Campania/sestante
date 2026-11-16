@@ -49,7 +49,6 @@ find backups -name 'authentik-*.sql.gz' | sort -r | tail -n +11 | xargs rm -f
 
 # --- Aggiornamento ---
 imposta_var AUTHENTIK_TAG "$richiesta"
-copia_media
 docker compose pull
 docker compose up -d
 attendi_salute 600 postgresql server worker

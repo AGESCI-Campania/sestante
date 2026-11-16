@@ -11,17 +11,6 @@ BLUEPRINTS=(
 	local/provider-plancia.yaml
 )
 
-# Risorse grafiche servite da /media (referenziate da blueprints/brand.yaml)
-RISORSE_MEDIA=(logo.png favicon.png background.jpeg)
-
-copia_media() {
-	mkdir -p media
-	local f
-	for f in "${RISORSE_MEDIA[@]}"; do
-		cp "resources/$f" "media/$f"
-	done
-}
-
 # Applica i blueprint con qualche tentativo: al primo avvio i flow di default
 # (referenziati con !Find) vengono creati in background dal worker e possono non esistere ancora.
 applica_blueprint() {

@@ -38,7 +38,6 @@ controlla_var_nuove
 
 # --- Cartelle e risorse ---
 mkdir -p data certs custom-templates
-copia_media
 
 # --- Avvio ---
 docker compose pull

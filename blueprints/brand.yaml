@@ -7,18 +7,21 @@ entries:
     identifiers:
       domain: authentik-default
     attrs:
+      # Immagini: resources/ montata in /web/dist/assets/agesci (docker-compose.override.yml),
+      # servita pubblicamente da Authentik su /static/dist/assets/agesci/ (in 2026.x /media non
+      # esiste più e i file caricati in /data hanno URL firmati che scadono).
       # Unico brand dell'istanza: deve essere quello di default, altrimenti per
       # auth.agescicampania.net (che non corrisponde a "authentik-default") Authentik usa un
       # brand vuoto interno — senza logo, CSS e flow di recupero.
       default: true
       branding_title: "Piattaforme Regionali Scout Campania"
-      branding_logo: "https://auth.agescicampania.net/media/logo.png"
-      branding_favicon: "https://auth.agescicampania.net/media/favicon.png"
+      branding_logo: "/static/dist/assets/agesci/logo.png"
+      branding_favicon: "/static/dist/assets/agesci/favicon.png"
       default_locale: it
       # Flow di recupero del brand: abilita i link di recupero generati/inviati dall'admin
       # (il link "Password dimenticata?" del login è invece in flow-recovery.yaml)
       flow_recovery: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
-      branding_default_flow_background: "https://auth.agescicampania.net/media/background.jpeg"
+      branding_default_flow_background: "/static/dist/assets/agesci/background.jpeg"
       branding_custom_css: |
         :root {
           --ak-accent: #7a1e99;

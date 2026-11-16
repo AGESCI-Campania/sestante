@@ -2,7 +2,8 @@ services:
   server:
     volumes:
       - ./blueprints:/blueprints/local
-      - ./media:/media
+      # Logo, favicon, sfondo: serviti su /static/dist/assets/agesci/ (vedi blueprints/brand.yaml)
+      - ./resources:/web/dist/assets/agesci:ro
     networks:
       default:
       # Rete condivisa con Caddy (repo agesci-campania-web-frontend): il traffico pubblico
@@ -13,7 +14,6 @@ services:
   worker:
     volumes:
       - ./blueprints:/blueprints/local
-      - ./media:/media
 
 networks:
   agesci-proxy:
