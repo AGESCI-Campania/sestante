@@ -56,6 +56,9 @@ attendi_salute 600 postgresql server worker
 
 applica_blueprint
 
+# Idempotente: installa la unit se manca, la aggiorna se è cambiata
+installa_servizio_systemd sestante "$UNIT_PROXY"
+
 cat <<EOF
 
 Aggiornamento completato (Authentik $richiesta). Backup: $backup

@@ -48,6 +48,9 @@ attendi_salute 600 postgresql server worker
 
 applica_blueprint
 
+# --- Avvio automatico al boot (dopo il reverse proxy) ---
+installa_servizio_systemd sestante "$UNIT_PROXY"
+
 # La password bootstrap serve solo al primo avvio: non lasciarla in chiaro in .env
 if [[ -n "$password_bootstrap" ]]; then
 	imposta_var AUTHENTIK_BOOTSTRAP_PASSWORD ""
@@ -75,6 +78,8 @@ fi
 cat <<EOF
 
 Passi successivi:
+  0. Avvio al boot: systemctl status sestante (se sopra è indicato un comando per
+     l'amministratore, va eseguito da un utente sudoer)
   1. In agesci-campania-web-frontend deve esistere caddy/sites/sestante.caddy
      (poi /opt/agesci-campania-web-frontend/scripts/aggiorna.sh)
   2. https://auth.agescicampania.net — login come akadmin, creare gli amministratori
