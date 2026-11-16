@@ -11,6 +11,9 @@ entries:
       branding_logo: "https://auth.agescicampania.net/media/logo.png"
       branding_favicon: "https://auth.agescicampania.net/media/favicon.png"
       default_locale: it
+      # Flow di recupero del brand: abilita i link di recupero generati/inviati dall'admin
+      # (il link "Password dimenticata?" del login è invece in flow-recovery.yaml)
+      flow_recovery: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
       branding_default_flow_background: "https://auth.agescicampania.net/media/background.jpeg"
       branding_custom_css: |
         :root {
