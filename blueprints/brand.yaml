@@ -30,14 +30,17 @@ entries:
         }
         /* Il logo è verticale (987x1345): Authentik lo adatta alla larghezza, troppo alto nella
            pagina di login e minuscolo nella barra dopo il login. Il CSS del brand è applicato
-           dentro ogni componente (shadow DOM): selettori di FlowExecutor e ak-page-navbar. */
+           dentro ogni componente (shadow DOM): selettori di FlowExecutor,
+           ak-page-navbar e ak-interface-user. */
         .pf-c-login__main-header.pf-c-brand img,
         img.branding-logo {
           width: auto !important;
           max-width: 100% !important;
           max-height: 160px !important;
         }
-        aside.brand .logo img {
+        /* Barra dell'amministrazione (ak-page-navbar) e dell'area utente /if/user */
+        aside.brand .logo img,
+        .pf-c-page__header-brand-link img.pf-c-brand {
           width: auto !important;
           height: 56px !important;
           max-height: 56px !important;
