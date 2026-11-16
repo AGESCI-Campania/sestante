@@ -49,6 +49,7 @@ applica_blueprint
 
 # --- Avvio automatico al boot (dopo il reverse proxy) ---
 installa_servizio_systemd sestante "$UNIT_PROXY"
+installa_backup_systemd
 
 # La password bootstrap serve solo al primo avvio: non lasciarla in chiaro in .env
 if [[ -n "$password_bootstrap" ]]; then

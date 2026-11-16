@@ -50,6 +50,8 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   con `installa_servizio_systemd`; senza sudo stampano il comando per l'amministratore.
   Funzioni condivise in `scripts/_comune.sh` (copia identica di quello del repo frontend) e
   `scripts/_sestante.sh` (elenco blueprint, risorse media).
+- Backup: `scripts/backup.sh` (DB + `.env` + `data/`), timer systemd `sestante-backup.timer`
+  installato da `installa_backup_systemd` in `scripts/_sestante.sh`; procedura in `docs/BACKUP.md`.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
 - Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
   agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se

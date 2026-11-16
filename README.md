@@ -19,6 +19,7 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
 - [`docs/INTEGRAZIONE-SSO.md`](docs/INTEGRAZIONE-SSO.md) — **come collegare una piattaforma a
   Sestante** (da dare agli agenti degli altri repo:
   <https://raw.githubusercontent.com/AGESCI-Campania/sestante/main/docs/INTEGRAZIONE-SSO.md>)
+- [`docs/BACKUP.md`](docs/BACKUP.md) — backup notturno, copia su NAS, ripristino
 
 ## Installazione e aggiornamento
 

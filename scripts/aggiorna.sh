@@ -57,6 +57,7 @@ applica_blueprint
 
 # Idempotente: installa la unit se manca, la aggiorna se è cambiata
 installa_servizio_systemd sestante "$UNIT_PROXY"
+installa_backup_systemd
 
 cat <<EOF
 
