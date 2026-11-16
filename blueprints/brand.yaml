@@ -28,3 +28,17 @@ entries:
           --pf-global--primary-color--100: #7a1e99;
           --pf-global--primary-color--200: #622599;
         }
+        /* Il logo è verticale (987x1345): Authentik lo adatta alla larghezza, troppo alto nella
+           pagina di login e minuscolo nella barra dopo il login. Il CSS del brand è applicato
+           dentro ogni componente (shadow DOM): selettori di FlowExecutor e ak-page-navbar. */
+        .pf-c-login__main-header.pf-c-brand img,
+        img.branding-logo {
+          width: auto !important;
+          max-width: 100% !important;
+          max-height: 160px !important;
+        }
+        aside.brand .logo img {
+          width: auto !important;
+          height: 56px !important;
+          max-height: 56px !important;
+        }

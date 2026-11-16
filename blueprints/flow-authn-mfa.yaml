@@ -3,6 +3,14 @@ metadata:
   name: Sestante - Abilita MFA nel flow di autenticazione
 
 entries:
+  # Titolo della pagina di login (di default "Welcome to authentik!"); nella scheda del
+  # browser diventa "Accedi - Piattaforme Regionali Scout Campania"
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-authentication-flow
+    attrs:
+      title: Accedi
+
   - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
     identifiers:
       name: default-authentication-mfa-validation
