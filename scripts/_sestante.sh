@@ -9,6 +9,7 @@ BLUEPRINTS=(
 	local/flow-authn-mfa.yaml
 	local/brand.yaml
 	local/provider-plancia.yaml
+	local/traduzioni.yaml
 )
 
 # Applica i blueprint con qualche tentativo: al primo avvio i flow di default

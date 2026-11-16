@@ -1,0 +1,111 @@
+version: 1
+metadata:
+  name: Sestante - Traduzioni italiane dei testi configurabili
+
+# Titoli dei flow ed etichette dei campi creati dai blueprint di default di Authentik
+# (blueprints/default/ nell'immagine), che sono in inglese e non passano dalle traduzioni
+# dell'interfaccia. Applicato dopo gli altri blueprint (vedi BLUEPRINTS in scripts/_sestante.sh).
+# Authentik riapplica i propri blueprint di default solo quando cambia il file, cioè a un
+# aggiornamento di versione: aggiorna.sh riapplica poi questo, che quindi prevale.
+# I testi dell'interfaccia (pulsanti, menu, messaggi) non sono qui: vengono dalle traduzioni
+# di Authentik (Transifex).
+
+entries:
+  # --- Titoli dei flow ---
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-authenticator-totp-setup
+    attrs:
+      title: Configura l'app di autenticazione
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-authenticator-webauthn-setup
+    attrs:
+      title: Configura una passkey o una chiave di sicurezza
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-authenticator-static-setup
+    attrs:
+      title: Codici di recupero
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-user-settings-flow
+    attrs:
+      title: Aggiorna i tuoi dati
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-password-change
+    attrs:
+      title: Cambia la password
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-invalidation-flow
+    attrs:
+      title: Uscita
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-provider-invalidation-flow
+    attrs:
+      title: Sei uscito da %(app)s.
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-provider-authorization-implicit-consent
+    attrs:
+      title: Accesso a %(app)s in corso
+
+  - model: authentik_flows.flow
+    identifiers:
+      slug: default-provider-authorization-explicit-consent
+    attrs:
+      title: Accesso a %(app)s in corso
+
+  # --- Campi delle impostazioni utente ---
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-user-settings-field-username
+    attrs:
+      label: Nome utente
+      placeholder: Nome utente
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-user-settings-field-name
+    attrs:
+      label: Nome e cognome
+      placeholder: Nome e cognome
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-user-settings-field-email
+    attrs:
+      label: Email
+      placeholder: Email
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-user-settings-field-locale
+    attrs:
+      label: Lingua
+      placeholder: Lingua
+
+  # --- Cambio password dalle impostazioni utente ---
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-password-change-field-password
+    attrs:
+      label: Nuova password
+      placeholder: Nuova password
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: default-password-change-field-password-repeat
+    attrs:
+      label: Ripeti la nuova password
+      placeholder: Ripeti la nuova password
