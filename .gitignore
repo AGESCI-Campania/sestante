@@ -10,7 +10,6 @@ data/
 media/
 templates/
 certs/
-custom-templates/
 
 # File temporanei locali
 tmp/

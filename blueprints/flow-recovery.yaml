@@ -28,7 +28,10 @@ entries:
       name: default-recovery-email
     attrs:
       use_global_settings: true
-      template: email/password_reset.html
+      # Template nostro (custom-templates/, montata in /templates): quello di Authentik ha il
+      # logo di authentik fisso e testi generici
+      template: recupero-password.html
+      subject: "Recupero password — Piattaforme Regionali Scout Campania"
       activate_user_on_success: true
       token_expiry: "minutes=30"
 
