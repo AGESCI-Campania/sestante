@@ -20,6 +20,7 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
   Sestante** (da dare agli agenti degli altri repo:
   <https://raw.githubusercontent.com/AGESCI-Campania/sestante/main/docs/INTEGRAZIONE-SSO.md>)
 - [`docs/BACKUP.md`](docs/BACKUP.md) — backup notturno, copia su NAS, ripristino
+- [`docs/GESTIONE-UTENTI.md`](docs/GESTIONE-UTENTI.md) — cosa può fare la segreteria regionale (gruppo `gestione-utenti`)
 
 ## Installazione e aggiornamento
 

@@ -10,6 +10,7 @@ BLUEPRINTS=(
 	local/brand.yaml
 	local/provider-plancia.yaml
 	local/traduzioni.yaml
+	local/rbac-gestione-utenti.yaml
 )
 
 # Applica i blueprint con qualche tentativo: al primo avvio i flow di default
@@ -30,24 +31,28 @@ applica_blueprint() {
 	done
 }
 
-# Installa (o aggiorna) il backup notturno: sestante-backup.service esegue scripts/backup.sh
-# come proprietario del repo (es. agesci), sestante-backup.timer lo lancia ogni notte.
-# Persistent=true: se il server era spento all'ora prevista, il backup parte all'avvio.
+# Installa (o aggiorna) un'attività periodica: <nome>.service esegue uno script del repo come
+# proprietario del repo (es. agesci), <nome>.timer lo lancia secondo OnCalendar.
+# Persistent=true: se il server era spento all'ora prevista, parte all'avvio successivo.
 # Idempotente; senza sudo stampa il comando per l'amministratore, come installa_servizio_systemd.
-installa_backup_systemd() {
-	local dir utente docker_bin cartella="/etc/systemd/system" tmp nome
+#
+# Uso:  installa_timer_systemd <nome> <descrizione> <OnCalendar> <script relativo al repo> <funzione>
+#       (<funzione> è quella da richiamare nel comando per l'amministratore)
+installa_timer_systemd() {
+	local nome="$1" descrizione="$2" quando="$3" script="$4" funzione="$5"
+	local dir utente docker_bin cartella="/etc/systemd/system" tmp f
 	if ! command -v systemctl >/dev/null 2>&1 || [[ ! -d /run/systemd/system ]]; then
-		avviso "systemd non disponibile: salto l'installazione del backup notturno."
+		avviso "systemd non disponibile: salto l'installazione di ${nome}.timer."
 		return 0
 	fi
 	dir="$(pwd -P)"
 	utente="$(stat -c %U "$dir")"
 	docker_bin="$(command -v docker)"
 	tmp="$(mktemp -d)"
-	cat > "$tmp/sestante-backup.service" <<UNIT
+	cat > "$tmp/${nome}.service" <<UNIT
 # Generato da scripts/installa.sh / aggiorna.sh di ${dir} — non modificare a mano.
 [Unit]
-Description=AGESCI Campania - backup di Sestante
+Description=AGESCI Campania - ${descrizione}
 Wants=docker.service
 After=docker.service sestante.service
 
@@ -56,39 +61,51 @@ Type=oneshot
 User=${utente}
 WorkingDirectory=${dir}
 Environment=PATH=$(dirname "$docker_bin"):/usr/local/bin:/usr/bin:/bin
-ExecStart=${dir}/scripts/backup.sh
+ExecStart=${dir}/${script}
 UNIT
-	cat > "$tmp/sestante-backup.timer" <<UNIT
+	cat > "$tmp/${nome}.timer" <<UNIT
 # Generato da scripts/installa.sh / aggiorna.sh di ${dir} — non modificare a mano.
 [Unit]
-Description=AGESCI Campania - backup notturno di Sestante
+Description=AGESCI Campania - ${descrizione} (pianificazione)
 
 [Timer]
-OnCalendar=*-*-* 03:30
-RandomizedDelaySec=15min
+OnCalendar=${quando}
+RandomizedDelaySec=5min
 Persistent=true
 
 [Install]
 WantedBy=timers.target
 UNIT
-	if cmp -s "$tmp/sestante-backup.service" "$cartella/sestante-backup.service" \
-		&& cmp -s "$tmp/sestante-backup.timer" "$cartella/sestante-backup.timer" \
-		&& systemctl is-enabled --quiet sestante-backup.timer 2>/dev/null; then
+	if cmp -s "$tmp/${nome}.service" "$cartella/${nome}.service" \
+		&& cmp -s "$tmp/${nome}.timer" "$cartella/${nome}.timer" \
+		&& systemctl is-enabled --quiet "${nome}.timer" 2>/dev/null; then
 		rm -rf "$tmp"
-		info "Backup notturno (sestante-backup.timer) già installato e aggiornato."
+		info "${nome}.timer già installato e aggiornato."
 		return 0
 	fi
 	if (( EUID != 0 )) && ! sudo -n true 2>/dev/null; then
 		rm -rf "$tmp"
-		avviso "Il backup notturno (sestante-backup.timer) va installato o aggiornato da un amministratore:"
-		avviso "  sudo bash -c 'cd ${dir} && source scripts/_comune.sh && source scripts/_sestante.sh && installa_backup_systemd'"
+		avviso "${nome}.timer (${descrizione}) va installato o aggiornato da un amministratore:"
+		avviso "  sudo bash -c 'cd ${dir} && source scripts/_comune.sh && source scripts/_sestante.sh && ${funzione}'"
 		return 0
 	fi
-	info "Installo il backup notturno (sestante-backup.timer)."
-	for nome in sestante-backup.service sestante-backup.timer; do
-		come_root install -m 644 "$tmp/$nome" "$cartella/$nome"
+	info "Installo ${nome}.timer (${descrizione})."
+	for f in "${nome}.service" "${nome}.timer"; do
+		come_root install -m 644 "$tmp/$f" "$cartella/$f"
 	done
 	rm -rf "$tmp"
 	come_root systemctl daemon-reload
-	come_root systemctl enable --now --quiet sestante-backup.timer
+	come_root systemctl enable --now --quiet "${nome}.timer"
+}
+
+# Backup notturno di database, .env e data/ (docs/BACKUP.md)
+installa_backup_systemd() {
+	installa_timer_systemd sestante-backup "backup di Sestante" "*-*-* 03:30" \
+		scripts/backup.sh installa_backup_systemd
+}
+
+# Permessi della segreteria regionale sui singoli utenti, ogni ora (blueprints/rbac-gestione-utenti.yaml)
+installa_permessi_systemd() {
+	installa_timer_systemd sestante-permessi "permessi della segreteria su Sestante" hourly \
+		scripts/permessi_gestione_utenti.sh installa_permessi_systemd
 }

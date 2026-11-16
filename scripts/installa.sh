@@ -46,10 +46,12 @@ docker compose up -d
 attendi_salute 600 postgresql server worker
 
 applica_blueprint
+scripts/permessi_gestione_utenti.sh
 
 # --- Avvio automatico al boot (dopo il reverse proxy) ---
 installa_servizio_systemd sestante "$UNIT_PROXY"
 installa_backup_systemd
+installa_permessi_systemd
 
 # La password bootstrap serve solo al primo avvio: non lasciarla in chiaro in .env
 if [[ -n "$password_bootstrap" ]]; then

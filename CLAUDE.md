@@ -52,6 +52,9 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   `scripts/_sestante.sh` (elenco blueprint, backup notturno).
 - Backup: `scripts/backup.sh` (DB + `.env` + `data/`), timer systemd `sestante-backup.timer`
   installato da `installa_backup_systemd` in `scripts/_sestante.sh`; procedura in `docs/BACKUP.md`.
+- Segreteria regionale: gruppo `gestione-utenti` (crea utenti, assegna solo i ruoli globali, mai
+  permessi sugli amministratori), `blueprints/rbac-gestione-utenti.yaml` + timer orario
+  `sestante-permessi.timer`; regole e limite noto di Authentik in `docs/GESTIONE-UTENTI.md`.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
 - Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
   agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se

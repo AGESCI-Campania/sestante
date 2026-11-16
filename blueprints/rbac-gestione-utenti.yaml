@@ -1,0 +1,121 @@
+version: 1
+metadata:
+  name: Sestante - Gestione utenti per la segreteria regionale
+
+# Gruppo gestione-utenti (segreteria regionale): crea utenti e assegna i ruoli globali delle
+# piattaforme, senza poter toccare gli amministratori né darsi permessi maggiori.
+#
+# - Permessi globali del ruolo: vedere e creare utenti, vedere i gruppi, entrare
+#   nell'amministrazione.
+# - Ruoli globali assegnabili: permessi "aggiungi/togli utente" solo sui gruppi elencati sotto.
+#   Nuovo ruolo globale = nuovo gruppo con le stesse due voci `permissions`.
+# - Modifica, disattivazione e reset password: permessi sul singolo utente, mai globali.
+#   Li ricevono subito gli utenti creati dalla segreteria (permessi iniziali); per tutti gli
+#   altri utenti non amministratori li assegna, e sugli amministratori li toglie,
+#   scripts/permessi_gestione_utenti.py (ogni ora e a ogni aggiornamento).
+# - Notifica email agli amministratori per ogni creazione/modifica/eliminazione di utenti e
+#   gruppi fatta da un membro di gestione-utenti.
+#
+# Limite noto di Authentik 2026.8: chi può creare o modificare un utente può, via API,
+# inserirlo direttamente in qualunque gruppo non superuser (UserSerializer.validate_groups
+# blocca solo i gruppi superuser). Per questo: notifica sopra, gruppi di default con ruoli
+# rimossi qui sotto, e nessun permesso sugli utenti con accesso all'amministrazione.
+
+entries:
+  - model: authentik_rbac.role
+    id: ruolo-gestione-utenti
+    identifiers:
+      name: gestione-utenti
+    attrs:
+      permissions:
+        - authentik_rbac.access_admin_interface
+        - authentik_core.view_user
+        - authentik_core.add_user
+        - authentik_core.view_group
+
+  - model: authentik_core.group
+    identifiers:
+      name: gestione-utenti
+    attrs:
+      is_superuser: false
+      roles:
+        - !KeyOf ruolo-gestione-utenti
+      attributes:
+        notes: Segreteria regionale - crea utenti e assegna i ruoli globali (blueprint rbac-gestione-utenti.yaml)
+
+  # Permessi sugli utenti creati dalla segreteria, dati al ruolo al momento della creazione
+  - model: authentik_rbac.initialpermissions
+    identifiers:
+      name: gestione-utenti - utenti creati
+    attrs:
+      role: !KeyOf ruolo-gestione-utenti
+      permissions:
+        - !Find [auth.permission, [content_type__app_label, authentik_core], [codename, view_user]]
+        - !Find [auth.permission, [content_type__app_label, authentik_core], [codename, change_user]]
+        - !Find [auth.permission, [content_type__app_label, authentik_core], [codename, reset_user_password]]
+
+  # --- Ruoli globali assegnabili dalla segreteria ---
+  - model: authentik_core.group
+    identifiers:
+      name: admin-multipiattaforma
+    permissions:
+      - permission: authentik_core.add_user_to_group
+        role: !KeyOf ruolo-gestione-utenti
+      - permission: authentik_core.remove_user_from_group
+        role: !KeyOf ruolo-gestione-utenti
+
+  - model: authentik_core.group
+    identifiers:
+      name: segreteria
+    permissions:
+      - permission: authentik_core.add_user_to_group
+        role: !KeyOf ruolo-gestione-utenti
+      - permission: authentik_core.remove_user_from_group
+        role: !KeyOf ruolo-gestione-utenti
+
+  # --- Gruppi di default non usati, con ruoli che darebbero accesso ampio (vedi limite sopra) ---
+  - model: authentik_core.group
+    state: absent
+    identifiers:
+      name: authentik Read-only
+
+  - model: authentik_core.group
+    state: absent
+    identifiers:
+      name: authentik Agent-Users
+
+  # --- Notifica agli amministratori sulle azioni della segreteria ---
+  - model: authentik_policies_expression.expressionpolicy
+    id: policy-azioni-gestione-utenti
+    identifiers:
+      name: sestante-azioni-gestione-utenti
+    attrs:
+      expression: |
+        # Vero per creazione/modifica/eliminazione di utenti o gruppi fatta da un membro di
+        # gestione-utenti (blueprint rbac-gestione-utenti.yaml)
+        event = request.context.get("event")
+        if not event or event.action not in ("model_created", "model_updated", "model_deleted"):
+            return False
+        model = event.context.get("model", {})
+        if model.get("app") != "authentik_core" or model.get("model_name") not in ("user", "group"):
+            return False
+        from authentik.core.models import User
+        autore = User.objects.filter(pk=event.user.get("pk")).first()
+        return bool(autore and ak_is_group_member(autore, name="gestione-utenti"))
+
+  - model: authentik_events.notificationrule
+    id: regola-azioni-gestione-utenti
+    identifiers:
+      name: sestante-notifica-azioni-gestione-utenti
+    attrs:
+      severity: notice
+      destination_group: !Find [authentik_core.group, [name, authentik Admins]]
+      transports:
+        - !Find [authentik_events.notificationtransport, [name, default-email-transport]]
+        - !Find [authentik_events.notificationtransport, [name, default-local-transport]]
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !KeyOf policy-azioni-gestione-utenti
+      target: !KeyOf regola-azioni-gestione-utenti

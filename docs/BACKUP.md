@@ -21,7 +21,7 @@ allo stesso modo.
 
 ## Quando
 
-- Ogni notte alle 03:30 (± 15 minuti) tramite il timer systemd `sestante-backup.timer`,
+- Ogni notte alle 03:30 (± 5 minuti) tramite il timer systemd `sestante-backup.timer`,
   installato da `scripts/installa.sh` / `scripts/aggiorna.sh` con la funzione
   `installa_backup_systemd` (`scripts/_sestante.sh`). Lo script gira come proprietario del
   repo (`agesci`); senza sudo, `installa.sh`/`aggiorna.sh` stampano il comando che
