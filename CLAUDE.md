@@ -49,7 +49,7 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   Entrambi installano/aggiornano la unit systemd `sestante.service` (dopo quella del proxy)
   con `installa_servizio_systemd`; senza sudo stampano il comando per l'amministratore.
   Funzioni condivise in `scripts/_comune.sh` (copia identica di quello del repo frontend) e
-  `scripts/_sestante.sh` (elenco blueprint, risorse media).
+  `scripts/_sestante.sh` (elenco blueprint, backup notturno).
 - Backup: `scripts/backup.sh` (DB + `.env` + `data/`), timer systemd `sestante-backup.timer`
   installato da `installa_backup_systemd` in `scripts/_sestante.sh`; procedura in `docs/BACKUP.md`.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.

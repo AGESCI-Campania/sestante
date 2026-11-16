@@ -4,6 +4,10 @@ services:
       - ./blueprints:/blueprints/local
       # Logo, favicon, sfondo: serviti su /static/dist/assets/agesci/ (vedi blueprints/brand.yaml)
       - ./resources:/web/dist/assets/agesci:ro
+      # Logo incorporato nelle email (cid:logo): Authentik allega sempre questo file, qui
+      # sostituito con il nostro. Bind mount di un file singolo: se logo.png cambia, serve
+      # `docker compose up -d --force-recreate server worker`.
+      - ./resources/logo.png:/web/dist/assets/icons/icon_left_brand.png:ro
     networks:
       default:
       # Rete condivisa con Caddy (repo agesci-campania-web-frontend): il traffico pubblico
@@ -14,6 +18,10 @@ services:
   worker:
     volumes:
       - ./blueprints:/blueprints/local
+      # Logo incorporato nelle email (cid:logo): Authentik allega sempre questo file, qui
+      # sostituito con il nostro. Bind mount di un file singolo: se logo.png cambia, serve
+      # `docker compose up -d --force-recreate server worker`.
+      - ./resources/logo.png:/web/dist/assets/icons/icon_left_brand.png:ro
 
 networks:
   agesci-proxy:
