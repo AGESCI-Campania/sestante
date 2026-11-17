@@ -112,7 +112,8 @@ entries:
       name: sestante-avatar-rimuovi-field-testo
     attrs:
       field_key: sestante_avatar_rimuovi
-      label: ""
+      # label obbligatoria in Authentik (non può essere vuota)
+      label: Immagine del profilo
       type: static
       required: false
       order: 0
@@ -130,7 +131,7 @@ entries:
       name: sestante-avatar-rimuovi-field-valore
     attrs:
       field_key: attributes.avatar
-      label: ""
+      label: Immagine del profilo
       type: hidden
       required: false
       order: 1
