@@ -63,7 +63,7 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   `docs/LOGIN-SOCIAL.md`.
 - Immagine del profilo: `blueprints/flow-avatar.yaml` (flow `sestante-avatar` e
   `sestante-avatar-rimuovi`, collegati da "Aggiorna i tuoi dati"; data-URI in `attributes.avatar`,
-  max 512 KB). L'impostazione Avatars non è blueprintabile: la allinea `imposta_avatar` in
+  max 512 KB; senza immagine l'emblema `resources/avatar.png`). L'impostazione Avatars non è blueprintabile: la allinea `imposta_avatar` in
   `scripts/_sestante.sh` (`AVATAR_MODI`) a ogni installazione/aggiornamento.
   Verso le piattaforme: scope OIDC `avatar` (`blueprints/scope-avatar.yaml`, claim `picture` come
   data-URI solo in `userinfo`), regole in `docs/INTEGRAZIONE-SSO.md` § 5.1 e § 6 punto 7.

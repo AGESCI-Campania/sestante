@@ -168,7 +168,7 @@ piattaforma chiede anche lo scope `avatar`, e il Provider deve avere la mappatur
 |---|---|
 | `data:image/<tipo>;base64,…` (JPG, PNG, WebP o GIF, al massimo 512 KB decodificati) | immagine caricata su Sestante |
 | URL `https://…` (oggi Gravatar) | nessuna immagine caricata, ma esiste un Gravatar per la sua email (arriva dallo scope `profile`) |
-| assente | nessuna immagine: usare l'avatar predefinito della piattaforma |
+| assente, o un percorso relativo (`/static/…`, l'emblema predefinito di Sestante) | nessuna immagine: usare l'avatar predefinito della piattaforma |
 
 - Il data-URI c'è **solo** nella risposta `userinfo`, mai nell'`id_token` (sarebbe troppo grande).
   Se manca la risposta `userinfo`, o si sta leggendo l'`id_token` come riserva, l'immagine
@@ -201,8 +201,8 @@ piattaforma chiede anche lo scope `avatar`, e il Provider deve avere la mappatur
    - data-URI → controllare il tipo (solo `image/jpeg|png|webp|gif`) e la dimensione, decodificare
      e salvarla come file della piattaforma; riscriverla solo se è cambiata (confronto di un hash
      salvato insieme alla foto).
-   - URL → scaricarla (timeout breve, stessi controlli) oppure ignorarla: scelta della piattaforma.
-   - assente → rimuovere la foto **solo se era arrivata da Sestante**; una foto caricata
+   - URL `https://…` → scaricarla (timeout breve, stessi controlli) oppure ignorarla: scelta della piattaforma.
+   - assente o percorso relativo → rimuovere la foto **solo se era arrivata da Sestante**; una foto caricata
      dall'utente sulla piattaforma resta. Serve quindi ricordare l'origine della foto.
    - Se l'utente cambia la foto sulla piattaforma, vale fino al login SSO successivo in cui
      Sestante ne invia una diversa da quella già salvata. Meglio però rimandare l'utente a

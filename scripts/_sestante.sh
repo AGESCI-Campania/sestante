@@ -37,8 +37,11 @@ applica_blueprint() {
 
 # Impostazione Avatars di Authentik (Admin → System → Settings), che non si può esprimere come
 # blueprint: prima l'immagine caricata dall'utente (blueprints/flow-avatar.yaml), poi Gravatar,
-# poi le iniziali. Riallineata a ogni installazione/aggiornamento.
-AVATAR_MODI="attributes.avatar,gravatar,initials"
+# poi l'emblema AGESCI Campania: `none` restituisce /static/dist/assets/images/user_default.png,
+# sostituito da resources/avatar.png (docker-compose.override.yml). Non un URL esplicito: Authentik
+# verificherebbe ogni URL con una richiesta HTTP dal container verso il proprio dominio pubblico.
+# Riallineata a ogni installazione/aggiornamento.
+AVATAR_MODI="attributes.avatar,gravatar,none"
 
 imposta_avatar() {
 	local esito

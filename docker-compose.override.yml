@@ -8,6 +8,9 @@ services:
       # sostituito con il nostro. Bind mount di un file singolo: se logo.png cambia, serve
       # `docker compose up -d --force-recreate server worker`.
       - ./resources/logo.png:/web/dist/assets/icons/icon_left_brand.png:ro
+      # Avatar di chi non ha caricato un'immagine (modo `none` di AVATAR_MODI in
+      # scripts/_sestante.sh, che restituisce questo file). Bind mount di un file singolo come sopra.
+      - ./resources/avatar.png:/web/dist/assets/images/user_default.png:ro
     networks:
       default:
       # Rete condivisa con Caddy (repo agesci-campania-web-frontend): il traffico pubblico

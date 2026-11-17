@@ -98,7 +98,7 @@ entries:
       stage: !KeyOf stage-avatar-write
       order: 20
 
-  # --- Rimozione (torna a Gravatar o alle iniziali) ---
+  # --- Rimozione (torna a Gravatar o all'emblema AGESCI Campania) ---
   - model: authentik_flows.flow
     id: flow-avatar-rimuovi
     identifiers:
@@ -122,7 +122,7 @@ entries:
       order: 0
       initial_value: >-
         L'immagine del profilo verrà rimossa: al suo posto sarà mostrata quella di Gravatar
-        associata alla tua email o, in mancanza, le tue iniziali.
+        associata alla tua email o, in mancanza, l'emblema AGESCI Campania.
       initial_value_expression: false
       placeholder: ""
       placeholder_expression: false
