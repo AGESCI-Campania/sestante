@@ -317,6 +317,6 @@ nella unit systemd): serve solo a runtime, al momento del login.
 | Piattaforma | Slug | Redirect URI | Blueprint | Stato |
 |---|---|---|---|---|
 | Plancia | `plancia` | `https://plancia.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-plancia.yaml` | blueprint pronto, piattaforma da reinstallare sul nuovo server |
-| Tana | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | blueprint pronto, Tana v1.0.0 da installare sul nuovo server |
+| Tana | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | attivo; immagine del profilo (scope `avatar`) da Tana v1.0.6 |
 
 Aggiornare la tabella (nel repo `sestante`) a ogni nuova piattaforma collegata.
