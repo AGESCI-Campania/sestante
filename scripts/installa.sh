@@ -38,6 +38,8 @@ controlla_var_nuove
 
 # --- Cartelle e risorse ---
 mkdir -p data certs custom-templates
+# File segreti per i blueprint (chiave Apple, docs/LOGIN-SOCIAL.md): solo il proprietario
+mkdir -p secrets && chmod 700 secrets
 
 # --- Avvio ---
 docker compose pull

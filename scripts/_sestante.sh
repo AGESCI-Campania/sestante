@@ -6,6 +6,8 @@
 BLUEPRINTS=(
 	local/groups-global.yaml
 	local/flow-recovery.yaml
+	local/source-google.yaml
+	local/source-apple.yaml
 	local/flow-authn-mfa.yaml
 	local/brand.yaml
 	local/provider-plancia.yaml

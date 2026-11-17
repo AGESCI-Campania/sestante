@@ -12,6 +12,7 @@ lasciare tutti fuori. Il backup va quindi tenuto **anche fuori dal server**.
 | `database.sql` | dump PostgreSQL completo (utenti, gruppi, MFA, provider, sessioni…) |
 | `env` | il `.env` del server: contiene `AUTHENTIK_SECRET_KEY` e `PG_PASS`. **Senza la chiave il dump non basta** (MFA, token e segreti cifrati non sarebbero più leggibili) |
 | `data/` | file caricati dalla UI di Authentik |
+| `secrets/` | file segreti letti dai blueprint (chiave Apple `apple-signin.p8`, vedi [LOGIN-SOCIAL.md](LOGIN-SOCIAL.md)) |
 
 Configurazione (blueprint, template, immagini, script) non serve: è in git.
 
@@ -102,14 +103,17 @@ l'attività), oppure qualunque strumento che faccia pull via rsync su SSH.
 
 1. Preparare il server e il frontend come per una prima installazione, creare
    `/opt/sestante` e clonare il repo, **senza** lanciare `scripts/installa.sh`.
-2. [agesci] Estrarre l'archivio e rimettere `.env` e `data/`:
+2. [agesci] Estrarre l'archivio e rimettere `.env`, `data/` e `secrets/`:
 
    ```bash
    cd /opt/sestante
    mkdir -p /tmp/ripristino && tar -xzf /percorso/sestante-AAAAMMGG-HHMMSS-VERSIONE.tar.gz -C /tmp/ripristino
    cp /tmp/ripristino/env .env && chmod 600 .env
    mkdir -p data && cp -a /tmp/ripristino/data/. data/
+   mkdir -p secrets && chmod 700 secrets && cp -a /tmp/ripristino/secrets/. secrets/
    ```
+
+   Gli archivi creati prima del 2026-11-17 non contengono `secrets/`: saltare l'ultima riga.
 
    `AUTHENTIK_TAG` in `.env` è la versione con cui è stato fatto il backup (anche nel nome
    dell'archivio): va ripristinato con quella stessa versione, si aggiorna dopo.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Backup completo di Sestante in un unico archivio: dump del database, .env (contiene
-# AUTHENTIK_SECRET_KEY, senza la quale il dump non basta) e data/.
+# AUTHENTIK_SECRET_KEY, senza la quale il dump non basta), data/ e secrets/.
 # Eseguito ogni notte dal timer systemd sestante-backup.timer (vedi docs/BACKUP.md);
 # si può lanciare anche a mano. Ripristino: docs/BACKUP.md.
 #
@@ -32,7 +32,7 @@ cp .env "$lavoro/env"
 info "Creo l'archivio $dest/$nome"
 # Scritto con un nome nascosto e rinominato alla fine: chi sincronizza la cartella non vede
 # mai un archivio a metà (escludere i file che iniziano con "." dalla sincronizzazione)
-tar -czf "$dest/.$nome.parziale" -C "$lavoro" database.sql env -C "$(pwd -P)" data
+tar -czf "$dest/.$nome.parziale" -C "$lavoro" database.sql env -C "$(pwd -P)" data secrets
 mv "$dest/.$nome.parziale" "$dest/$nome"
 
 # Rotazione: solo gli archivi di questo script, non quelli di aggiorna.sh

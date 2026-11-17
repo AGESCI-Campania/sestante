@@ -20,7 +20,8 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
 - Due Gruppi Authentik per i ruoli globali: `admin-multipiattaforma` e `segreteria` — mappati
   nel claim `groups` del token OIDC (di serie nello scope `profile` di Authentik).
 - MFA vive solo su Sestante; le piattaforme client non la richiedono più in autonomia una
-  volta collegate.
+  volta collegate. Eccezione: con l'accesso via Google/Apple vale la MFA del provider, Sestante non
+  chiede il proprio secondo fattore (decisione 2026-11-17).
 - Periodo di transizione sulla piattaforma pilota: 60 giorni, con disattivazione del login
   locale subordinata alla verifica che tutti gli utenti attivi abbiano fatto almeno un login
   SSO riuscito (non una scadenza a calendario cieca).
@@ -50,11 +51,16 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   con `installa_servizio_systemd`; senza sudo stampano il comando per l'amministratore.
   Funzioni condivise in `scripts/_comune.sh` (copia identica di quello del repo frontend) e
   `scripts/_sestante.sh` (elenco blueprint, backup notturno).
-- Backup: `scripts/backup.sh` (DB + `.env` + `data/`), timer systemd `sestante-backup.timer`
+- Backup: `scripts/backup.sh` (DB + `.env` + `data/` + `secrets/`), timer systemd `sestante-backup.timer`
   installato da `installa_backup_systemd` in `scripts/_sestante.sh`; procedura in `docs/BACKUP.md`.
 - Segreteria regionale: gruppo `gestione-utenti` (crea utenti, assegna solo i ruoli globali, mai
   permessi sugli amministratori), `blueprints/rbac-gestione-utenti.yaml` + timer orario
   `sestante-permessi.timer`; regole e limite noto di Authentik in `docs/GESTIONE-UTENTI.md`.
+- Accesso con Google/Apple: `blueprints/source-google.yaml`, `source-apple.yaml` (sorgenti spente
+  finché mancano le credenziali in `.env`; chiave Apple in `secrets/`, montata nel worker), flow
+  `default-source-authentication` senza MFA di Sestante (accettata quella di Google/Apple, decisione
+  dell'utente 2026-11-17), nessuna registrazione automatica (`email_link`); procedura in
+  `docs/LOGIN-SOCIAL.md`.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
 - Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
   agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se

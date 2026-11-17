@@ -320,49 +320,19 @@ SCIM client per una sincronizzazione bidirezionale automatica senza codice custo
 **Obiettivo**: Permettere agli utenti di accedere a Sestante con i propri account
 Google, Microsoft o Apple, senza creare una password separata.
 
+Google e Apple sono pronti: blueprint `source-google.yaml` / `source-apple.yaml`, procedura
+in [`docs/LOGIN-SOCIAL.md`](docs/LOGIN-SOCIAL.md). Resta da fare:
+
+- [ ] Google: creare progetto e client su Google Cloud Console, compilare `.env` (docs/LOGIN-SOCIAL.md)
+- [ ] Apple: App ID, Services ID e chiave su Apple Developer, `.env` e `secrets/apple-signin.p8`
+- [ ] Verifiche elencate in docs/LOGIN-SOCIAL.md dopo `scripts/aggiorna.sh`
+
 Le redirect URI per tutti i provider seguono il pattern:
 `https://auth.agescicampania.net/source/oauth/callback/<slug>/`
 
 ---
 
-### 4a. Google
-
-**Prerequisiti** — completare sul [Google Cloud Console](https://console.cloud.google.com):
-
-- [ ] Creare o scegliere un progetto Google Cloud
-- [ ] Abilitare l'API "Google Identity" (OAuth 2.0)
-- [ ] Creare credenziali: **OAuth 2.0 Client ID** (tipo: "Web Application")
-- [ ] In "Authorized redirect URIs" aggiungere:
-  `https://auth.agescicampania.net/source/oauth/callback/google/`
-- [ ] Scaricare/copiare **Client ID** e **Client Secret**
-- [ ] Aggiungere a `.env`: `SOCIAL_GOOGLE_CLIENT_ID=...` e `SOCIAL_GOOGLE_CLIENT_SECRET=...`
-
-**Task Authentik**:
-
-- [ ] Creare `blueprints/source-google.yaml`:
-
-  ```yaml
-  version: 1
-  metadata:
-    name: Source — Google OAuth
-  entries:
-    - model: authentik_sources_oauth.oauthsource
-      state: present
-      identifiers:
-        slug: google
-      attrs:
-        name: "Google"
-        provider_type: google
-        consumer_key: !Env SOCIAL_GOOGLE_CLIENT_ID
-        consumer_secret: !Env SOCIAL_GOOGLE_CLIENT_SECRET
-        enabled: true
-        authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]
-        enrollment_flow: !Find [authentik_flows.flow, [slug, default-source-enrollment]]
-  ```
-
----
-
-### 4b. Microsoft (Entra ID / Azure AD)
+### 4a. Microsoft (Entra ID / Azure AD)
 
 **Prerequisiti** — completare su [portal.azure.com](https://portal.azure.com) → Entra ID → App registrations:
 
@@ -404,64 +374,14 @@ Le redirect URI per tutti i provider seguono il pattern:
         oidc_well_known_url: "https://login.microsoftonline.com/!Env SOCIAL_MICROSOFT_TENANT_ID/v2.0/.well-known/openid-configuration"
         enabled: true
         authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]
-        enrollment_flow: !Find [authentik_flows.flow, [slug, default-source-enrollment]]
+        enrollment_flow: null
   ```
 
-  > Nota: verificare la sintassi `!Env` nel OIDC URL sul campo stringa nella versione installata;
-  > in alternativa, inserire il tenant ID direttamente nella stringa URL.
-
----
-
-### 4c. Apple
-
-**Prerequisiti** — completare su [developer.apple.com](https://developer.apple.com):
-
-- [ ] **Creare App ID**:
-  - Identifier: es. `net.agescicampania.sestante`
-  - Abilitare capability: "Sign In with Apple"
-- [ ] **Creare Services ID** (stesso nome dell'App ID):
-  - Abilitare "Sign In with Apple"
-  - Configurare "Return URLs": `https://auth.agescicampania.net/source/oauth/callback/apple/`
-- [ ] **Creare Key**:
-  - Abilitare "Sign in with Apple" e selezionare l'App ID
-  - Scaricare il file `.p8` (solo una volta)
-  - Annotare **Key ID**
-- [ ] Annotare **Team ID** (visibile nell'header del portale developer)
-- [ ] Aggiungere a `.env`:
-  ```
-  SOCIAL_APPLE_SERVICES_ID=net.agescicampania.sestante     # Services ID
-  SOCIAL_APPLE_TEAM_ID=XXXXXXXXXX
-  SOCIAL_APPLE_KEY_ID=XXXXXXXXXX
-  # Contenuto del file .p8 (su una riga, senza header/footer)
-  SOCIAL_APPLE_PRIVATE_KEY=...
-  ```
-
-**Task Authentik**:
-
-- [ ] Creare `blueprints/source-apple.yaml`:
-
-  ```yaml
-  version: 1
-  metadata:
-    name: Source — Apple
-  entries:
-    - model: authentik_sources_oauth.oauthsource
-      state: present
-      identifiers:
-        slug: apple
-      attrs:
-        name: "Apple"
-        provider_type: apple
-        # consumer_key format: services_id;team_id;key_id
-        consumer_key: !Format "%s;%s;%s" [!Env SOCIAL_APPLE_SERVICES_ID, !Env SOCIAL_APPLE_TEAM_ID, !Env SOCIAL_APPLE_KEY_ID]
-        consumer_secret: !Env SOCIAL_APPLE_PRIVATE_KEY
-        enabled: true
-        authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]
-        enrollment_flow: !Find [authentik_flows.flow, [slug, default-source-enrollment]]
-  ```
-
-  > Nota: Apple richiede un dominio reale e registrato (no `.local`, no IP). Testare solo
-  > con `auth.agescicampania.net` live su HTTPS.
+  > Nota: `!Env` dentro una stringa non viene sostituito: comporre l'URL con
+  > `!Format ["https://login.microsoftonline.com/%s/v2.0/.well-known/openid-configuration", !Env SOCIAL_MICROSOFT_TENANT_ID]`.
+  > Seguire lo schema di `source-google.yaml` (sorgente spenta senza credenziali, `email_link`,
+  > nessun enrollment) e aggiungere la sorgente a
+  > `sources` dello stage di identificazione in `flow-authn-mfa.yaml`.
 
 ---
 

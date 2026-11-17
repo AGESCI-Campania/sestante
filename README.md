@@ -21,6 +21,7 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
   <https://raw.githubusercontent.com/AGESCI-Campania/sestante/main/docs/INTEGRAZIONE-SSO.md>)
 - [`docs/BACKUP.md`](docs/BACKUP.md) — backup notturno, copia su NAS, ripristino
 - [`docs/GESTIONE-UTENTI.md`](docs/GESTIONE-UTENTI.md) — cosa può fare la segreteria regionale (gruppo `gestione-utenti`)
+- [`docs/LOGIN-SOCIAL.md`](docs/LOGIN-SOCIAL.md) — accesso con Google e Apple: configurazione sui portali, attivazione, verifica
 
 ## Installazione e aggiornamento
 

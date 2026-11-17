@@ -1,0 +1,36 @@
+version: 1
+metadata:
+  name: Sestante - Accesso con Apple
+
+# Procedura completa (Apple Developer, .env, chiave .p8, verifica): docs/LOGIN-SOCIAL.md.
+# La sorgente esiste sempre, ma è attiva (pulsante sulla pagina di login) solo con i tre
+# identificativi in .env e la chiave in secrets/apple-signin.p8: senza, resta spenta con
+# valori segnaposto.
+entries:
+  - model: authentik_sources_oauth.oauthsource
+    identifiers:
+      slug: apple
+    attrs:
+      name: Apple
+      provider_type: apple
+      # Formato richiesto da Authentik: services_id;team_id;key_id
+      consumer_key: !Format
+        - "%s;%s;%s"
+        - !Env [SOCIAL_APPLE_SERVICES_ID, da-configurare]
+        - !Env [SOCIAL_APPLE_TEAM_ID, da-configurare]
+        - !Env [SOCIAL_APPLE_KEY_ID, da-configurare]
+      # Contenuto del file .p8 (PEM, righe BEGIN/END incluse): Authentik ci firma il
+      # client secret JWT. Montato in sola lettura nel worker (docker-compose.override.yml).
+      consumer_secret: !File [/sestante-secrets/apple-signin.p8, da-configurare]
+      enabled: !Condition
+        - AND
+        - !Env SOCIAL_APPLE_SERVICES_ID
+        - !Env SOCIAL_APPLE_TEAM_ID
+        - !Env SOCIAL_APPLE_KEY_ID
+        - !File /sestante-secrets/apple-signin.p8
+      # Entra solo chi ha già un account Sestante con la stessa email; chi usa "Nascondi la
+      # mia email" deve collegare Apple dalle impostazioni utente (docs/LOGIN-SOCIAL.md).
+      user_matching_mode: email_link
+      enrollment_flow: null
+      # Flow di default: nessun secondo fattore su Sestante, vale quello dell'account Google/Apple
+      authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]

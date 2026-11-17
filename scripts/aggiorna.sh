@@ -48,6 +48,8 @@ docker compose exec -T postgresql sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_
 find backups -name 'authentik-*.sql.gz' | sort -r | tail -n +11 | xargs rm -f
 
 # --- Aggiornamento ---
+# Montata nel worker: se mancasse, Docker la creerebbe di root
+mkdir -p secrets && chmod 700 secrets
 imposta_var AUTHENTIK_TAG "$richiesta"
 docker compose pull
 docker compose up -d

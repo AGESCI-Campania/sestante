@@ -18,6 +18,9 @@ services:
   worker:
     volumes:
       - ./blueprints:/blueprints/local
+      # File segreti letti dai blueprint con !File (es. chiave Apple, source-apple.yaml);
+      # cartella esclusa da git, inclusa nel backup.
+      - ./secrets:/sestante-secrets:ro
       # Logo incorporato nelle email (cid:logo): Authentik allega sempre questo file, qui
       # sostituito con il nostro. Bind mount di un file singolo: se logo.png cambia, serve
       # `docker compose up -d --force-recreate server worker`.

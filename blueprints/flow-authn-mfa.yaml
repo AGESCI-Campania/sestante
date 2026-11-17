@@ -67,6 +67,12 @@ entries:
         - username
         - email
       webauthn_stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, sestante-passkey-login]]
+      # Pulsanti "Accedi con Google/Apple" (source-google.yaml, source-apple.yaml, applicati
+      # prima di questo): compaiono solo se la sorgente è attiva.
+      sources:
+        - !Find [authentik_sources_oauth.oauthsource, [slug, google]]
+        - !Find [authentik_sources_oauth.oauthsource, [slug, apple]]
+      show_source_labels: true
 
   # La regola di default che salta il secondo fattore dopo un accesso con passkey
   # (auth_method == auth_webauthn_pwl) va rivalutata al momento della fase: valutata solo alla
