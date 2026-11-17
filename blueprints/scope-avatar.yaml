@@ -1,0 +1,28 @@
+version: 1
+metadata:
+  name: Sestante - Scope OIDC avatar
+
+# Scope `avatar`: l'immagine del profilo caricata dall'utente (blueprints/flow-avatar.yaml) nel
+# claim `picture`, come data-URI. La mappatura `profile` di serie mette in `picture` solo gli
+# avatar che sono URL (es. Gravatar) ed esclude i data-URI, quindi le due non si sovrappongono.
+# Contratto verso le piattaforme: docs/INTEGRAZIONE-SSO.md § 5-6.
+#
+# Il claim va solo nella risposta userinfo: con include_claims_in_id_token (attivo di serie) le
+# stesse mappature finiscono anche nell'id_token, che con un'immagine fino a ~700 KB diventerebbe
+# enorme. L'id_token si emette sull'endpoint token: lì la mappatura non restituisce nulla.
+
+entries:
+  - model: authentik_providers_oauth2.scopemapping
+    identifiers:
+      name: "Sestante: avatar"
+    attrs:
+      name: "Sestante: avatar"
+      scope_name: avatar
+      description: Immagine del profilo
+      expression: |
+        if not http_request or not http_request.path.endswith("/userinfo/"):
+            return {}
+        avatar = request.user.attributes.get("avatar") or ""
+        if not avatar.startswith("data:image/"):
+            return {}
+        return {"picture": avatar}

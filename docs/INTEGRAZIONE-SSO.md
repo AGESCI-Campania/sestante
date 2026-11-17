@@ -88,7 +88,9 @@ Dati che servono (chiederli all'utente se non ovvi):
 - **launch URL**: pagina che avvia il login SSO, usata dal dashboard di Sestante;
 - tipo di client: `confidential` (app web con backend, il caso normale) oppure `public` + PKCE
   (SPA o app mobile senza backend);
-- eventuali claim extra oltre a `openid profile email` (di norma non servono).
+- eventuali claim extra oltre a `openid profile email`: in particolare se la piattaforma
+  mostra la foto dell'utente, lo scope `avatar` (§ 5.1), da aggiungere a `property_mappings`
+  con `!Find [authentik_providers_oauth2.scopemapping, [name, "Sestante: avatar"]]`.
 
 Modello (stesso schema del blueprint già validato sull'istanza; l'utente lo salva come
 `blueprints/provider-<slug>.yaml` e lo aggiunge a `BLUEPRINTS` in `scripts/_sestante.sh`):
@@ -156,6 +158,24 @@ Con gli scope `openid profile email`:
   social in shell) prima di scrivere logica che ne dipende; in particolare il valore di
   `email_verified` se la libreria lo richiede per il collegamento per email.
 
+### 5.1 Immagine del profilo (scope `avatar`, facoltativo)
+
+Su Sestante l'utente può caricare la propria immagine del profilo. Per riceverla la
+piattaforma chiede anche lo scope `avatar`, e il Provider deve avere la mappatura
+`Sestante: avatar` (`blueprints/scope-avatar.yaml`).
+
+| Claim `picture` nella risposta `userinfo` | Significato |
+|---|---|
+| `data:image/<tipo>;base64,…` (JPG, PNG, WebP o GIF, al massimo 512 KB decodificati) | immagine caricata su Sestante |
+| URL `https://…` (oggi Gravatar) | nessuna immagine caricata, ma esiste un Gravatar per la sua email (arriva dallo scope `profile`) |
+| assente | nessuna immagine: usare l'avatar predefinito della piattaforma |
+
+- Il data-URI c'è **solo** nella risposta `userinfo`, mai nell'`id_token` (sarebbe troppo grande).
+  Se manca la risposta `userinfo`, o si sta leggendo l'`id_token` come riserva, l'immagine
+  **non** va considerata rimossa: si lascia quella che c'è.
+- Non mostrare il data-URI direttamente nelle pagine e non tenerlo nel database: decodificarlo
+  una volta e salvarlo come file (§ 6, punto 7).
+
 ## 6. Comportamento richiesto alla piattaforma
 
 1. Pulsante "**Accedi con SSO AGESCI Campania**" nella pagina di login (affiancato al login
@@ -176,6 +196,22 @@ Con gli scope `openid profile email`:
    se l'utente lo chiede.
 6. **Utenti senza email** o con email duplicata: rifiutare il login con un messaggio chiaro,
    non creare account parziali.
+7. **Immagine del profilo** (solo se la piattaforma mostra foto degli utenti e chiede lo scope
+   `avatar`): a ogni login SSO allineare la foto locale a `picture` di `userinfo` (§ 5.1).
+   - data-URI → controllare il tipo (solo `image/jpeg|png|webp|gif`) e la dimensione, decodificare
+     e salvarla come file della piattaforma; riscriverla solo se è cambiata (confronto di un hash
+     salvato insieme alla foto).
+   - URL → scaricarla (timeout breve, stessi controlli) oppure ignorarla: scelta della piattaforma.
+   - assente → rimuovere la foto **solo se era arrivata da Sestante**; una foto caricata
+     dall'utente sulla piattaforma resta. Serve quindi ricordare l'origine della foto.
+   - Se l'utente cambia la foto sulla piattaforma, vale fino al login SSO successivo in cui
+     Sestante ne invia una diversa da quella già salvata. Meglio però rimandare l'utente a
+     Sestante (`https://auth.agescicampania.net/if/user/#/settings`) e togliere il caricamento
+     locale per chi entra via SSO.
+   - L'allineamento avviene solo al login: una foto cambiata su Sestante appare sulla
+     piattaforma al login SSO successivo.
+   - Un errore nella foto (formato, dimensione, decodifica) non deve mai bloccare il login:
+     registrarlo nel log e proseguire.
 
 ### 6.1 Django + django-allauth (caso standard dell'ecosistema)
 
@@ -194,7 +230,7 @@ SOCIALACCOUNT_PROVIDERS = {
                     "client_id": env.str("SOCIAL_SESTANTE_CLIENT_ID", default=""),
                     "secret": env.str("SOCIAL_SESTANTE_CLIENT_SECRET", default=""),
                 },
-                "SCOPE": ["openid", "profile", "email"],
+                "SCOPE": ["openid", "profile", "email"],  # + "avatar" se serve la foto (§ 5.1)
             }
         ]
     },
@@ -215,6 +251,12 @@ SOCIALACCOUNT_ADAPTER = "<app>.adapters.<Nome>SocialAccountAdapter"
   login, se presenti, restano solo collegamento a utenti esistenti); `pre_social_login` per il
   collegamento per email e la sincronizzazione dei ruoli globali; `populate_user` per i ruoli
   del nuovo utente. Con allauth ≥ 65.11 `extra_data` è `{"userinfo": {...}, "id_token": {...}}`.
+- Foto (scope `avatar`): leggere `extra_data["userinfo"]["picture"]` in `pre_social_login`
+  (utenti esistenti) e dopo la creazione dei nuovi (es. segnale `social_account_added` o
+  `save_user`). Allauth salva `extra_data` nel database a ogni login, quindi va tolto il
+  data-URI (`pop("picture")`, solo se inizia con `data:`) **dopo** averlo letto e **prima**
+  del salvataggio, altrimenti ogni account si porta dietro fino a ~700 KB di testo. Tenere
+  `picture` quando è un URL.
 - MFA con `allauth.mfa`: in un `MFAAdapter` personalizzato, `is_mfa_enabled` restituisce
   `False` solo durante il login in corso se tra i metodi della sessione
   (`request.session["account_authentication_methods"]`) c'è
@@ -264,6 +306,7 @@ nella unit systemd): serve solo a runtime, al momento del login.
 - [ ] collegamento per email degli utenti esistenti, provisioning dei nuovi
 - [ ] sincronizzazione dei soli ruoli globali da `groups`, con revoca; ruoli locali intatti
 - [ ] nessuna MFA ripetuta per le sessioni SSO, MFA invariata per il login locale
+- [ ] se la piattaforma mostra foto degli utenti: scope `avatar` e allineamento della foto (§ 6, punto 7)
 - [ ] login locale ancora attivo (transizione)
 - [ ] header proxy e impostazioni HTTPS conformi a `INTEGRAZIONE.md` del frontend
 - [ ] nessun riferimento residuo a `agescicampania.org` (issuer, redirect, email)

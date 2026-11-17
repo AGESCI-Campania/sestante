@@ -56,6 +56,7 @@ docker compose up -d
 attendi_salute 600 postgresql server worker
 
 applica_blueprint
+imposta_avatar
 scripts/permessi_gestione_utenti.sh
 
 # Idempotente: installa la unit se manca, la aggiorna se è cambiata

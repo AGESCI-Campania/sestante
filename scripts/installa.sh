@@ -48,6 +48,7 @@ docker compose up -d
 attendi_salute 600 postgresql server worker
 
 applica_blueprint
+imposta_avatar
 scripts/permessi_gestione_utenti.sh
 
 # --- Avvio automatico al boot (dopo il reverse proxy) ---

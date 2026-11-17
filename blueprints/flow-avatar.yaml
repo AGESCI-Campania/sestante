@@ -1,0 +1,195 @@
+version: 1
+metadata:
+  name: Sestante - Immagine del profilo
+
+# L'utente carica la propria immagine del profilo (avatar) da "Aggiorna i tuoi dati" in /if/user.
+# Il file viene salvato come data-URI nell'attributo `avatar` dell'utente (campo prompt di tipo
+# file, vedi docs Authentik "System settings → Avatars"); Authentik lo mostra perché l'impostazione
+# Avatars è `attributes.avatar,gravatar,initials` (AVATAR_MODI in scripts/_sestante.sh: le
+# impostazioni di sistema non sono gestibili da blueprint).
+#
+# Flow separati invece di un campo file nel modulo "Aggiorna i tuoi dati": lì il campo sarebbe
+# facoltativo, e salvando il modulo senza scegliere un file il browser invia un file vuoto che
+# sovrascriverebbe l'immagine esistente.
+
+entries:
+  # --- Caricamento ---
+  - model: authentik_flows.flow
+    id: flow-avatar
+    identifiers:
+      slug: sestante-avatar
+    attrs:
+      name: Sestante - Immagine del profilo
+      title: Immagine del profilo
+      designation: stage_configuration
+      authentication: require_authenticated
+
+  - model: authentik_stages_prompt.prompt
+    id: prompt-avatar
+    identifiers:
+      name: sestante-avatar-field-file
+    attrs:
+      field_key: attributes.avatar
+      label: Immagine (JPG, PNG, WebP o GIF, al massimo 512 KB)
+      type: file
+      required: true
+      order: 0
+      placeholder: ""
+      placeholder_expression: false
+
+  # Il data-URI finisce nel database e in ogni risposta API che include l'utente (anche negli
+  # elenchi dell'amministrazione): limite di dimensione e soli formati immagine.
+  - model: authentik_policies_expression.expressionpolicy
+    id: policy-avatar
+    identifiers:
+      name: sestante-avatar-validazione
+    attrs:
+      expression: |
+        TIPI = ("image/jpeg", "image/png", "image/webp", "image/gif")
+        MASSIMO = 512 * 1024
+
+        uri = request.context.get("prompt_data", {}).get("attributes.avatar") or ""
+        intestazione, _, contenuto = uri.partition(",")
+        tipo = intestazione.removeprefix("data:").split(";")[0]
+        if tipo not in TIPI:
+            ak_message("Formato non supportato: carica un'immagine JPG, PNG, WebP o GIF.")
+            return False
+        dimensione = len(contenuto) * 3 // 4
+        if dimensione == 0:
+            ak_message("Il file selezionato è vuoto.")
+            return False
+        if dimensione > MASSIMO:
+            ak_message(
+                f"L'immagine è di {dimensione // 1024} KB, il massimo è 512 KB: "
+                "ritagliala o riducine le dimensioni e riprova."
+            )
+            return False
+        return True
+
+  - model: authentik_stages_prompt.promptstage
+    id: stage-avatar-prompt
+    identifiers:
+      name: sestante-avatar-prompt
+    attrs:
+      fields:
+        - !KeyOf prompt-avatar
+      validation_policies:
+        - !KeyOf policy-avatar
+
+  - model: authentik_stages_user_write.userwritestage
+    id: stage-avatar-write
+    identifiers:
+      name: sestante-avatar-write
+    attrs:
+      user_creation_mode: never_create
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-avatar
+      stage: !KeyOf stage-avatar-prompt
+      order: 10
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-avatar
+      stage: !KeyOf stage-avatar-write
+      order: 20
+
+  # --- Rimozione (torna a Gravatar o alle iniziali) ---
+  - model: authentik_flows.flow
+    id: flow-avatar-rimuovi
+    identifiers:
+      slug: sestante-avatar-rimuovi
+    attrs:
+      name: Sestante - Rimozione immagine del profilo
+      title: Rimuovi l'immagine del profilo
+      designation: stage_configuration
+      authentication: require_authenticated
+
+  - model: authentik_stages_prompt.prompt
+    id: prompt-avatar-rimuovi-testo
+    identifiers:
+      name: sestante-avatar-rimuovi-field-testo
+    attrs:
+      field_key: sestante_avatar_rimuovi
+      label: ""
+      type: static
+      required: false
+      order: 0
+      initial_value: >-
+        L'immagine del profilo verrà rimossa: al suo posto sarà mostrata quella di Gravatar
+        associata alla tua email o, in mancanza, le tue iniziali.
+      initial_value_expression: false
+      placeholder: ""
+      placeholder_expression: false
+
+  # Campo nascosto con valore vuoto: lo user write stage svuota attributes.avatar
+  - model: authentik_stages_prompt.prompt
+    id: prompt-avatar-rimuovi-valore
+    identifiers:
+      name: sestante-avatar-rimuovi-field-valore
+    attrs:
+      field_key: attributes.avatar
+      label: ""
+      type: hidden
+      required: false
+      order: 1
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.promptstage
+    id: stage-avatar-rimuovi-prompt
+    identifiers:
+      name: sestante-avatar-rimuovi-prompt
+    attrs:
+      fields:
+        - !KeyOf prompt-avatar-rimuovi-testo
+        - !KeyOf prompt-avatar-rimuovi-valore
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-avatar-rimuovi
+      stage: !KeyOf stage-avatar-rimuovi-prompt
+      order: 10
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-avatar-rimuovi
+      stage: !KeyOf stage-avatar-write
+      order: 20
+
+  # --- Collegamenti in "Aggiorna i tuoi dati" (default-user-settings-flow) ---
+  # Campo statico: il valore è HTML mostrato così com'è e non viene scritto sull'utente
+  # (chiave sconosciuta, scartata dallo user write stage).
+  - model: authentik_stages_prompt.prompt
+    id: prompt-avatar-link
+    identifiers:
+      name: sestante-user-settings-field-avatar
+    attrs:
+      field_key: sestante_avatar
+      label: Immagine del profilo
+      type: static
+      required: false
+      order: 204
+      initial_value: |
+        ritorno = "?next=/if/user/%23/settings"
+        testo = f'<a href="/if/flow/sestante-avatar/{ritorno}">Carica una nuova immagine</a>'
+        if user.attributes.get("avatar"):
+            testo += f' · <a href="/if/flow/sestante-avatar-rimuovi/{ritorno}">Rimuovi</a>'
+        return testo
+      initial_value_expression: true
+      placeholder: ""
+      placeholder_expression: false
+
+  # Elenco completo dei campi: il blueprint di default di Authentik, riapplicato a ogni
+  # aggiornamento di versione, lo riporta ai soli quattro campi; aggiorna.sh riapplica poi questo.
+  - model: authentik_stages_prompt.promptstage
+    identifiers:
+      name: default-user-settings
+    attrs:
+      fields:
+        - !Find [authentik_stages_prompt.prompt, [name, default-user-settings-field-username]]
+        - !Find [authentik_stages_prompt.prompt, [name, default-user-settings-field-name]]
+        - !Find [authentik_stages_prompt.prompt, [name, default-user-settings-field-email]]
+        - !Find [authentik_stages_prompt.prompt, [name, default-user-settings-field-locale]]
+        - !KeyOf prompt-avatar-link

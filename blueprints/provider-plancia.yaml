@@ -22,6 +22,8 @@ entries:
         - !Find [authentik_providers_oauth2.scopemapping, [name, "authentik default OAuth Mapping: OpenID 'openid'"]]
         - !Find [authentik_providers_oauth2.scopemapping, [name, "authentik default OAuth Mapping: OpenID 'profile'"]]
         - !Find [authentik_providers_oauth2.scopemapping, [name, "authentik default OAuth Mapping: OpenID 'email'"]]
+        # Immagine del profilo caricata su Sestante (scope-avatar.yaml)
+        - !Find [authentik_providers_oauth2.scopemapping, [name, "Sestante: avatar"]]
       # client_id e client_secret sono auto-generati da Authentik.
       # Dopo l'applicazione del blueprint, recuperarli da:
       # UI Authentik → Applications → Providers → Plancia AGESCI Campania → Edit

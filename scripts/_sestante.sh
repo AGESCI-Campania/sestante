@@ -10,8 +10,10 @@ BLUEPRINTS=(
 	local/source-apple.yaml
 	local/flow-authn-mfa.yaml
 	local/brand.yaml
+	local/scope-avatar.yaml
 	local/provider-plancia.yaml
 	local/traduzioni.yaml
+	local/flow-avatar.yaml
 	local/rbac-gestione-utenti.yaml
 )
 
@@ -31,6 +33,25 @@ applica_blueprint() {
 		docker compose exec -T worker ak apply_blueprint "$bp" || true
 		errore "Blueprint $bp non applicato: vedere l'output sopra."
 	done
+}
+
+# Impostazione Avatars di Authentik (Admin → System → Settings), che non si può esprimere come
+# blueprint: prima l'immagine caricata dall'utente (blueprints/flow-avatar.yaml), poi Gravatar,
+# poi le iniziali. Riallineata a ogni installazione/aggiornamento.
+AVATAR_MODI="attributes.avatar,gravatar,initials"
+
+imposta_avatar() {
+	local esito
+	esito="$(docker compose exec -T worker ak shell -c "
+from authentik.tenants.models import Tenant
+Tenant.objects.filter(schema_name='public').update(avatars='$AVATAR_MODI')
+print('Avatars:', Tenant.objects.get(schema_name='public').avatars)
+" 2>/dev/null || true)"
+	if grep -qx "Avatars: $AVATAR_MODI" <<<"$esito"; then
+		info "Impostazione Avatars: $AVATAR_MODI"
+	else
+		avviso "Impostazione Avatars non applicata: impostarla a mano in Admin → System → Settings ($AVATAR_MODI)."
+	fi
 }
 
 # Installa (o aggiorna) un'attività periodica: <nome>.service esegue uno script del repo come
