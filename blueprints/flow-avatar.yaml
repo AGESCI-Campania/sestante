@@ -48,7 +48,10 @@ entries:
         TIPI = ("image/jpeg", "image/png", "image/webp", "image/gif")
         MASSIMO = 512 * 1024
 
-        uri = request.context.get("prompt_data", {}).get("attributes.avatar") or ""
+        # Il serializer annida i field_key con il punto: attributes.avatar arriva come
+        # {"attributes": {"avatar": ...}}
+        dati = request.context.get("prompt_data", {})
+        uri = (dati.get("attributes") or {}).get("avatar") or dati.get("attributes.avatar") or ""
         intestazione, _, contenuto = uri.partition(",")
         tipo = intestazione.removeprefix("data:").split(";")[0]
         if tipo not in TIPI:
