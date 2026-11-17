@@ -21,6 +21,14 @@ entries:
       # Flow di recupero del brand: abilita i link di recupero generati/inviati dall'admin
       # (il link "Password dimenticata?" del login è invece in flow-recovery.yaml)
       flow_recovery: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
+      # Gli altri flow del brand: il blueprint di default di Authentik li imposta solo se crea
+      # lui il brand (state: created, se non esiste già un brand di default), ma il brand lo
+      # crea questo blueprint. Senza flow_user_settings l'area utente mostra "Nessun flusso di
+      # impostazioni configurato" e non si può aggiornare nulla (né nome né immagine del profilo).
+      flow_authentication: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+      flow_invalidation: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
+      flow_user_settings: !Find [authentik_flows.flow, [slug, default-user-settings-flow]]
+      flow_request: !Find [authentik_flows.flow, [slug, default-request]]
       branding_default_flow_background: "/static/dist/assets/agesci/background.jpeg"
       branding_custom_css: |
         :root {
