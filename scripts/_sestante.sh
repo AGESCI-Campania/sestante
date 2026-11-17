@@ -12,6 +12,7 @@ BLUEPRINTS=(
 	local/brand.yaml
 	local/scope-avatar.yaml
 	local/provider-plancia.yaml
+	local/provider-tana.yaml
 	local/traduzioni.yaml
 	local/flow-avatar.yaml
 	local/rbac-gestione-utenti.yaml
