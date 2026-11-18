@@ -40,6 +40,8 @@ entries:
       # binding che passa farebbe entrare anche gli invitati di altre piattaforme)
       policy_engine_mode: all
       meta_launch_url: "https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/?next=/gestione/"
+      # Icona nel dashboard: pubblicata da Tana (INTEGRAZIONE-SSO.md § 4)
+      meta_icon: "https://baseaiello.agescicampania.net/static/tana/img/pwa/icona-192.png"
 
   # Utenti invitati da un'altra piattaforma: niente accesso (inviti-piattaforme.yaml)
   - model: authentik_policies.policybinding

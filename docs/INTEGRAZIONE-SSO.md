@@ -87,6 +87,12 @@ Dati che servono (chiederli all'utente se non ovvi):
 - **redirect URI** esatte (match `strict`), una per ogni dominio di produzione — ricavarle
   dalla libreria effettivamente installata (vedi § 6.1), non a memoria;
 - **launch URL**: pagina che avvia il login SSO, usata dal dashboard di Sestante;
+- **icona** per il dashboard di Sestante: la pubblica la piattaforma, non Sestante. Un PNG
+  quadrato (192×192 va bene) a un URL HTTPS pubblico, senza login e **senza hash nel nome**:
+  deve restare uguale tra un rilascio e l'altro (con `ManifestStaticFilesStorage` e WhiteNoise
+  va bene il nome originale, che WhiteNoise continua a servire). Di solito è l'icona PWA o l'apple-touch-icon che la piattaforma ha già. Verificare
+  con `curl -I` che risponda 200 `image/png`. Se un giorno l'URL cambia, la piattaforma lo
+  comunica all'utente insieme al nuovo blueprint;
 - tipo di client: `confidential` (app web con backend, il caso normale) oppure `public` + PKCE
   (SPA o app mobile senza backend);
 - eventuali claim extra oltre a `openid profile email`: in particolare se la piattaforma
@@ -128,13 +134,15 @@ entries:
     identifiers:
       slug: <slug>
     attrs:
-      name: <Nome>
+      name: <Nome> – <descrizione breve>   # come appare nel dashboard, es. "Tana – Prenotazioni Base Aiello"
       slug: <slug>
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, <Nome> AGESCI Campania]]
       # all: ogni binding deve passare, compreso sestante-accesso-piattaforme (con any un altro
       # binding che passa farebbe entrare anche gli invitati di altre piattaforme)
       policy_engine_mode: all
       meta_launch_url: "https://<sottodominio>.agescicampania.net/<percorso-avvio-login>"
+      # Icona nel dashboard: pubblicata dalla piattaforma, URL stabile (vedi sopra)
+      meta_icon: "https://<sottodominio>.agescicampania.net/<percorso-icona>.png"
 
   # Sempre presente: gli utenti invitati da un'altra piattaforma non entrano (§ 10)
   - model: authentik_policies.policybinding
@@ -317,6 +325,7 @@ nella unit systemd): serve solo a runtime, al momento del login.
 - [ ] provider OIDC con id `sestante`, discovery su `https://auth.agescicampania.net/application/o/<slug>/`
 - [ ] client id/secret solo da variabili d'ambiente, chiavi vuote in `.env.template`
 - [ ] callback verificata sulla libreria installata e comunicata all'utente con il blueprint (§ 4)
+- [ ] nome descrittivo e icona per il dashboard (`name`, `meta_icon`, § 4), URL dell'icona stabile e pubblico
 - [ ] collegamento per email degli utenti esistenti, provisioning dei nuovi
 - [ ] sincronizzazione dei soli ruoli globali da `groups`, con revoca; ruoli locali intatti
 - [ ] nessuna MFA ripetuta per le sessioni SSO, MFA invariata per il login locale
@@ -331,8 +340,8 @@ nella unit systemd): serve solo a runtime, al momento del login.
 
 | Piattaforma | Slug | Redirect URI | Blueprint | Stato |
 |---|---|---|---|---|
-| Plancia | `plancia` | `https://plancia.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-plancia.yaml` | attivo da Plancia 3.0.0; immagine del profilo (scope `avatar`) da 3.0.4; inviti (§ 10): non usati (inviti locali di Plancia) |
-| Tana | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | attivo; immagine del profilo (scope `avatar`) da Tana v1.0.6; inviti (§ 10): account `svc-tana` pronto, integrazione in Tana da fare |
+| Plancia – Guidoncini Verdi Campania | `plancia` | `https://plancia.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-plancia.yaml` | attivo da Plancia 3.0.0; immagine del profilo (scope `avatar`) da 3.0.4; inviti (§ 10): non usati (inviti locali di Plancia) |
+| Tana – Prenotazioni Base Aiello | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | attivo; immagine del profilo (scope `avatar`) da Tana v1.0.6; inviti (§ 10): account `svc-tana` pronto, integrazione in Tana da fare |
 
 Aggiornare la tabella (nel repo `sestante`) a ogni nuova piattaforma collegata.
 
