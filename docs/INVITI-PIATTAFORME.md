@@ -44,6 +44,11 @@ piattaforme: [INTEGRAZIONE-SSO.md § 10](INTEGRAZIONE-SSO.md#10-inviti-dalla-pia
   può riaprire il link. Dopo la creazione dell'account il controllo del punto 3 blocca ogni
   riuso. Gli inviti scaduti li cancella Authentik.
 - Gli inviti non li spedisce Sestante: l'email la manda la piattaforma, con il suo testo.
+- **Nessuna email di verifica** nell'iscrizione (decisione 2026-11-18): la prova di possesso
+  dell'indirizzo è aver ricevuto il link, che la piattaforma manda solo a quell'indirizzo. Chi
+  inoltra il link fa creare l'account a un altro, quindi l'email della piattaforma deve dire di non
+  inoltrarlo. L'email dell'account è sempre quella dell'invito: un valore diverso inviato dal
+  browser viene sostituito (verificato su 2026.8.5).
 
 ## Controlli per gli amministratori
 
@@ -93,6 +98,10 @@ subito tutti gli inviti di una piattaforma, anche quelli non ancora usati, basta
 `svc-<slug>`: il controllo del flusso rifiuta gli inviti degli account disattivati.
 
 ## Regole per gli amministratori
+
+- Le applicazioni hanno `policy_engine_mode: all`: devono passare **tutti** i binding. Con `any`
+  basterebbe un altro binding che passa (es. un gruppo) per far entrare anche gli invitati di
+  altre piattaforme. Non cambiarlo, né su un'applicazione nuova né in UI.
 
 - `sestante-invito` deve restare l'**unico** invitation stage di Sestante. Un invito senza
   flusso varrebbe anche in un altro flusso con un invitation stage, saltando i controlli.

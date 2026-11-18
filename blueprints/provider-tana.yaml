@@ -36,7 +36,9 @@ entries:
       name: Tana – Prenotazioni Base Aiello
       slug: tana
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, Tana AGESCI Campania]]
-      policy_engine_mode: any
+      # all: ogni binding deve passare, compreso sestante-accesso-piattaforme (con any un altro
+      # binding che passa farebbe entrare anche gli invitati di altre piattaforme)
+      policy_engine_mode: all
       meta_launch_url: "https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/?next=/gestione/"
 
   # Utenti invitati da un'altra piattaforma: niente accesso (inviti-piattaforme.yaml)

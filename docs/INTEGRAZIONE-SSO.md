@@ -131,7 +131,9 @@ entries:
       name: <Nome>
       slug: <slug>
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, <Nome> AGESCI Campania]]
-      policy_engine_mode: any
+      # all: ogni binding deve passare, compreso sestante-accesso-piattaforme (con any un altro
+      # binding che passa farebbe entrare anche gli invitati di altre piattaforme)
+      policy_engine_mode: all
       meta_launch_url: "https://<sottodominio>.agescicampania.net/<percorso-avvio-login>"
 
   # Sempre presente: gli utenti invitati da un'altra piattaforma non entrano (§ 10)
