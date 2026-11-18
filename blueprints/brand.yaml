@@ -50,9 +50,18 @@ entries:
            colonna (2rem) a un'icona che qui manca, e il testo va a capo a ogni parola. La
            descrizione ("Fase di configurazione dell'autenticatore…") è tecnica: nascosta, i
            nomi sono in flow-authn-mfa.yaml. */
+        /* I pulsanti di PatternFly non vanno mai a capo (white-space: nowrap): con i nomi lunghi
+           il pulsante usciva dal riquadro e allargava tutto il modulo (anche "Non sei tu?"). */
         fieldset[name="stages"] .authenticator-button {
-          grid-template-columns: 1fr !important;
+          grid-template-columns: minmax(0, 1fr) !important;
           text-align: start;
+          white-space: normal !important;
+        }
+        fieldset[name="stages"] .authenticator-button .content,
+        fieldset[name="stages"] .authenticator-button .pf-c-title {
+          min-width: 0;
+          white-space: normal !important;
+          overflow-wrap: anywhere;
         }
         fieldset[name="stages"] .authenticator-button .pf-c-form__helper-text {
           display: none;
