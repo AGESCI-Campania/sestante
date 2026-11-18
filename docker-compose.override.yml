@@ -19,6 +19,9 @@ services:
         aliases:
           - sestante-server
   worker:
+    # Nome con cui Sestante si presenta al server SMTP (EHLO): Authentik non ha un'opzione apposita,
+    # usa il nome host del container che invia le email (il worker). Vuota = ID del container.
+    hostname: ${EMAIL_EHLO:-}
     volumes:
       - ./blueprints:/blueprints/local
       # File segreti letti dai blueprint con !File (es. chiave Apple, source-apple.yaml);
