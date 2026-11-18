@@ -8,7 +8,12 @@
 # - Tutti gli altri (amministratori, membri di gestione-utenti, chiunque abbia ruoli o accesso
 #   all'amministrazione, account di servizio): il ruolo perde quei permessi. Così un utente
 #   creato dalla segreteria e poi promosso amministratore esce dalla sua portata.
+# - Controllo degli utenti invitati da una piattaforma (blueprints/inviti-piattaforme.yaml): non
+#   devono avere gruppi né ruoli finché sono limitati (attributes.piattaforme_consentite).
+#   Altrimenti avviso agli amministratori (evento configuration_warning, notificato dalla regola
+#   di default di Authentik), ripetuto a ogni esecuzione finché il caso non è risolto.
 from authentik.core.models import User, UserTypes
+from authentik.events.models import Event, EventAction
 from authentik.rbac.models import Role
 
 PERMESSI = [
@@ -39,3 +44,17 @@ else:
             ruolo.assign_perms(PERMESSI, utente)
             gestibili += 1
     print(f"Permessi gestione-utenti: {gestibili} utenti gestibili, {esclusi} esclusi.")
+
+invitati = User.objects.filter(attributes__has_key="piattaforme_consentite")
+anomali = sorted(u.username for u in invitati if u.groups.exists() or u.roles.exists())
+if anomali:
+    Event.new(
+        EventAction.CONFIGURATION_WARNING,
+        message=(
+            "Utenti invitati da una piattaforma con gruppi o ruoli: "
+            + ", ".join(anomali)
+            + ". Se l'accesso va allargato togliere attributes.piattaforme_consentite, "
+            "altrimenti togliere gruppi e ruoli (docs/INVITI-PIATTAFORME.md)."
+        ),
+    ).save()
+print(f"Invitati dalle piattaforme: {invitati.count()} utenti, {len(anomali)} con gruppi o ruoli non previsti.")

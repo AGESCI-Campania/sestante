@@ -58,7 +58,12 @@ servono, valutare prima l'effetto di questo limite.
 - **Nuovo ruolo globale** (nuovo gruppo che le piattaforme leggono dal claim `groups`): in
   `blueprints/rbac-gestione-utenti.yaml` aggiungere il gruppo con le due voci `permissions`
   come per `segreteria`, poi commit, push e `scripts/aggiorna.sh`.
+- **Utenti invitati da una piattaforma** (path `utenti/invitati`, attributo
+  `piattaforme_consentite`): entrano solo nella piattaforma che li ha invitati. Per allargare
+  l'accesso la segreteria toglie l'attributo (o aggiunge lo slug di un'altra piattaforma) e solo
+  dopo assegna eventuali ruoli globali. Vedi [INVITI-PIATTAFORME.md](INVITI-PIATTAFORME.md).
 - **Verifica a mano dei permessi**: [agesci] `cd /opt/sestante && scripts/permessi_gestione_utenti.sh`
-  stampa quanti utenti sono gestibili dalla segreteria e quanti esclusi.
+  stampa quanti utenti sono gestibili dalla segreteria e quanti esclusi, e quanti invitati
+  dalle piattaforme hanno gruppi o ruoli non previsti.
 - **Stato del timer**: `systemctl list-timers sestante-permessi.timer`,
   `journalctl -u sestante-permessi -n 20`.

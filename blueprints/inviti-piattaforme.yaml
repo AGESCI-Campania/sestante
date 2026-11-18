@@ -1,0 +1,345 @@
+version: 1
+metadata:
+  name: Sestante - Inviti creati dalle piattaforme
+
+# Una piattaforma (es. Tana) invita su Sestante un'email a cui ha dato un ruolo locale: la persona
+# riceve dalla piattaforma il link, crea il suo account (password e MFA) e al primo accesso SSO
+# la piattaforma la collega per email. L'account vale SOLO per la piattaforma che ha invitato.
+# Regole e contratto verso le piattaforme: docs/INVITI-PIATTAFORME.md, docs/INTEGRAZIONE-SSO.md § 10.
+#
+# - Ogni piattaforma che invita ha, nel suo provider-<slug>.yaml, un account di servizio
+#   svc-<slug> e un ruolo inviti-<slug>: crea inviti, vede e revoca solo quelli della piattaforma.
+#   Un ruolo per piattaforma perché i permessi sugli inviti creati vanno al ruolo: con un ruolo
+#   condiviso una piattaforma vedrebbe e revocherebbe gli inviti delle altre. Nessun permesso su
+#   utenti o gruppi: un token rubato non crea utenti né dà ruoli globali.
+# - La piattaforma consentita la ricava Sestante dall'account che ha creato l'invito
+#   (attributes.piattaforma, con il ruolo inviti-<piattaforma>), mai dai dati dell'invito, e la
+#   scrive in attributes.piattaforme_consentite del nuovo utente.
+# - sestante-accesso-piattaforme, legata a ogni applicazione, fa entrare quegli utenti solo nelle
+#   piattaforme elencate. Allargare l'accesso = gestione-utenti toglie l'attributo.
+#
+# Ruolo assegnato direttamente all'account di servizio, non tramite gruppo: per il limite di
+# Authentik descritto in docs/GESTIONE-UTENTI.md gestione-utenti può mettere un utente in un
+# gruppo qualunque, ma non assegnare ruoli.
+
+entries:
+  # --- Flusso di iscrizione su invito ---
+  # Il ruolo inviti-<slug> di ogni piattaforma ha la vista di questo flusso (nel suo
+  # provider-<slug>.yaml): la piattaforma ne legge il pk con
+  # GET /api/v3/flows/instances/sestante-iscrizione-invito/ per crearvi gli inviti.
+  - model: authentik_flows.flow
+    id: flow-iscrizione-invito
+    identifiers:
+      slug: sestante-iscrizione-invito
+    attrs:
+      name: Sestante - Iscrizione su invito
+      title: Crea il tuo account
+      designation: enrollment
+      authentication: require_unauthenticated
+
+  # Senza un invito valido (esistente, non scaduto, creato per questo flusso) il flusso si ferma.
+  # Unico invitation stage di Sestante: non crearne altri (un invito senza flusso varrebbe
+  # anche lì, saltando i controlli sotto).
+  - model: authentik_stages_invitation.invitationstage
+    identifiers:
+      name: sestante-invito
+    attrs:
+      continue_flow_without_invitation: false
+
+  # Vero = invito da rifiutare (lo stage di rifiuto resta nel flusso, con il messaggio in
+  # deny_message). Se va bene scrive la piattaforma consentita nei dati del nuovo utente.
+  - model: authentik_policies_expression.expressionpolicy
+    id: policy-controllo-invito
+    identifiers:
+      name: sestante-invito-controllo
+    attrs:
+      expression: |
+        # Controllo dell'invito (blueprint inviti-piattaforme.yaml), valutato dopo l'invitation
+        # stage e di nuovo subito prima della creazione dell'utente.
+        from datetime import timedelta
+        from django.utils.timezone import now
+        from authentik.core.models import User, UserTypes
+
+        AMMESSE = {"email", "username", "name", "attributes.invito"}
+        DURATA_MASSIMA = timedelta(days=31)
+        NON_VALIDO = (
+            "Invito non valido o scaduto. Chiedi un nuovo invito alla piattaforma che ti ha "
+            "mandato il link."
+        )
+        ESISTENTE = (
+            "Hai già un account Sestante con questa email: entra nella piattaforma con "
+            "«Accedi con SSO AGESCI Campania». Se non ricordi la password, usa «Password "
+            "dimenticata?» nella pagina di accesso."
+        )
+
+        piano = request.context.get("flow_plan")
+        invito = request.context.get("invitation")
+
+        def rifiuta(messaggio):
+            if piano is not None:
+                piano.context["deny_message"] = messaggio
+            return True
+
+        if piano is None or invito is None or invito.flow_id is None:
+            return rifiuta(NON_VALIDO)
+        # Solo inviti con scadenza (al massimo 31 giorni da adesso)
+        if not invito.expiring or invito.expires is None or invito.expires > now() + DURATA_MASSIMA:
+            return rifiuta(NON_VALIDO)
+
+        # Solo le chiavi ammesse: le altre (groups, type, path, is_active, attributes.*…)
+        # finirebbero sull'utente
+        dati = invito.fixed_data or {}
+        if not isinstance(dati, dict) or set(dati) - AMMESSE:
+            return rifiuta(NON_VALIDO)
+        email = str(dati.get("email") or "").strip()
+        username = str(dati.get("username") or "").strip()
+        if not email or not username:
+            return rifiuta(NON_VALIDO)
+
+        # Piattaforma dall'account di servizio che ha creato l'invito, mai dall'invito
+        autore = invito.created_by
+        piattaforma = (autore.attributes or {}).get("piattaforma") if autore else None
+        if (
+            not autore
+            or not autore.is_active
+            or autore.type != UserTypes.SERVICE_ACCOUNT
+            or not isinstance(piattaforma, str)
+            or not piattaforma
+            or not autore.roles.filter(name="inviti-" + piattaforma).exists()
+        ):
+            return rifiuta(NON_VALIDO)
+
+        # Account già esistente: nessun doppione, l'invito non serve
+        if (
+            User.objects.filter(email__iexact=email).exists()
+            or User.objects.filter(username__iexact=username).exists()
+        ):
+            return rifiuta(ESISTENTE)
+
+        piano.context.setdefault("prompt_data", {})["attributes.piattaforme_consentite"] = [piattaforma]
+        return False
+
+  - model: authentik_stages_deny.denystage
+    identifiers:
+      name: sestante-invito-rifiutato
+    attrs:
+      deny_message: Invito non valido o scaduto. Chiedi un nuovo invito alla piattaforma che ti ha mandato il link.
+
+  # Email e username arrivano dall'invito: l'email si mostra soltanto, il nome si può correggere
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: sestante-invito-campo-email
+    attrs:
+      field_key: email
+      label: Email
+      type: text_read_only
+      required: false
+      order: 0
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: sestante-invito-campo-nome
+    attrs:
+      field_key: name
+      label: Nome e cognome
+      type: text
+      required: true
+      order: 1
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: sestante-invito-campo-password
+    attrs:
+      field_key: password
+      label: Password
+      type: password
+      required: true
+      order: 2
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.prompt
+    identifiers:
+      name: sestante-invito-campo-password-ripeti
+    attrs:
+      field_key: password_repeat
+      label: Ripeti la password
+      type: password
+      required: true
+      order: 3
+      placeholder: ""
+      placeholder_expression: false
+
+  - model: authentik_stages_prompt.promptstage
+    identifiers:
+      name: sestante-invito-dati
+    attrs:
+      fields:
+        - !Find [authentik_stages_prompt.prompt, [name, sestante-invito-campo-email]]
+        - !Find [authentik_stages_prompt.prompt, [name, sestante-invito-campo-nome]]
+        - !Find [authentik_stages_prompt.prompt, [name, sestante-invito-campo-password]]
+        - !Find [authentik_stages_prompt.prompt, [name, sestante-invito-campo-password-ripeti]]
+      # Stesse regole della password del cambio password di Authentik
+      validation_policies:
+        - !Find [authentik_policies_password.passwordpolicy, [name, default-password-change-password-policy]]
+
+  # Nessun gruppo (create_users_group vuoto): la chiave groups di un invito lo user write la
+  # scarta comunque. Path dedicato per riconoscere gli invitati in Directory → Users.
+  - model: authentik_stages_user_write.userwritestage
+    identifiers:
+      name: sestante-invito-crea-utente
+    attrs:
+      user_creation_mode: always_create
+      create_users_as_inactive: false
+      user_type: internal
+      user_path_template: utenti/invitati
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 10
+    attrs:
+      stage: !Find [authentik_stages_invitation.invitationstage, [name, sestante-invito]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  # Controllo subito dopo l'invito (prima di chiedere la password)...
+  - model: authentik_flows.flowstagebinding
+    id: binding-controllo-invito
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 20
+    attrs:
+      stage: !Find [authentik_stages_deny.denystage, [name, sestante-invito-rifiutato]]
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 30
+    attrs:
+      stage: !Find [authentik_stages_prompt.promptstage, [name, sestante-invito-dati]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  # ...e di nuovo subito prima di creare l'utente (account nato nel frattempo, piattaforma
+  # consentita riscritta dopo il prompt)
+  - model: authentik_flows.flowstagebinding
+    id: binding-controllo-finale
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 40
+    attrs:
+      stage: !Find [authentik_stages_deny.denystage, [name, sestante-invito-rifiutato]]
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 50
+    attrs:
+      stage: !Find [authentik_stages_user_write.userwritestage, [name, sestante-invito-crea-utente]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  # Secondo fattore subito (stesso stage del login, flow-authn-mfa.yaml): l'iscrizione termina
+  # con l'accesso a Sestante, che altrimenti non passerebbe dal flusso di autenticazione.
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 60
+    attrs:
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, default-authentication-mfa-validation]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-iscrizione-invito
+      order: 100
+    attrs:
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
+      evaluate_on_plan: true
+      re_evaluate_policies: false
+      invalid_response_action: retry
+
+  # failure_result: true = se la policy va in errore l'invito si rifiuta (mai accettato senza controlli)
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !KeyOf policy-controllo-invito
+      target: !KeyOf binding-controllo-invito
+    attrs:
+      failure_result: true
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !KeyOf policy-controllo-invito
+      target: !KeyOf binding-controllo-finale
+    attrs:
+      failure_result: true
+
+  # --- Accesso limitato alle piattaforme consentite ---
+  # Legata a ogni applicazione nel suo provider-<slug>.yaml (applicato dopo questo blueprint).
+  # In errore nega (failure_result di default false): meglio un diniego che un accesso libero.
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers:
+      name: sestante-accesso-piattaforme
+    attrs:
+      expression: |
+        # Utenti invitati da una piattaforma (blueprint inviti-piattaforme.yaml): solo le
+        # applicazioni in attributes.piattaforme_consentite. Gli altri utenti: nessun limite.
+        consentite = (request.user.attributes or {}).get("piattaforme_consentite")
+        if consentite is None:
+            return True
+        if isinstance(consentite, str):
+            consentite = [consentite]
+        if request.obj is not None and request.obj.slug in consentite:
+            return True
+        ak_message(
+            "Il tuo account Sestante vale solo per la piattaforma che ti ha invitato. Per "
+            "accedere anche a questa chiedi alla segreteria regionale."
+        )
+        return False
+
+  # --- Notifica agli amministratori per ogni invito creato ---
+  - model: authentik_policies_expression.expressionpolicy
+    id: policy-inviti-creati
+    identifiers:
+      name: sestante-inviti-creati
+    attrs:
+      expression: |
+        # Vero per la creazione di un invito (blueprint inviti-piattaforme.yaml)
+        event = request.context.get("event")
+        if not event or event.action != "model_created":
+            return False
+        model = event.context.get("model", {})
+        return model.get("app") == "authentik_stages_invitation" and model.get("model_name") == "invitation"
+
+  - model: authentik_events.notificationrule
+    id: regola-inviti-creati
+    identifiers:
+      name: sestante-notifica-inviti-creati
+    attrs:
+      severity: notice
+      destination_group: !Find [authentik_core.group, [name, authentik Admins]]
+      transports:
+        - !Find [authentik_events.notificationtransport, [name, default-email-transport]]
+        - !Find [authentik_events.notificationtransport, [name, default-local-transport]]
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !KeyOf policy-inviti-creati
+      target: !KeyOf regola-inviti-creati

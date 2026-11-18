@@ -46,6 +46,7 @@ Decisioni già prese (non rimetterle in discussione senza l'utente):
 | Provider OIDC + Application in Authentik | `blueprints/provider-<slug>.yaml` nel repo `sestante` | **l'utente** (l'agente della piattaforma prepara il contenuto, § 4) |
 | Client ID / secret | generati da Authentik all'applicazione del blueprint | l'utente li copia nel `.env` della piattaforma |
 | Codice di login, mappatura ruoli, provisioning | repo della piattaforma | agente della piattaforma |
+| Account di servizio e token per gli inviti (facoltativo, § 10) | stesso blueprint della piattaforma | **l'utente**; il token va nel `.env` della piattaforma |
 | Blocco Caddy, rete, header proxy | `docs/INTEGRAZIONE.md` del frontend | come da quel documento |
 
 Regole per l'agente della piattaforma:
@@ -132,7 +133,18 @@ entries:
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, <Nome> AGESCI Campania]]
       policy_engine_mode: any
       meta_launch_url: "https://<sottodominio>.agescicampania.net/<percorso-avvio-login>"
+
+  # Sempre presente: gli utenti invitati da un'altra piattaforma non entrano (§ 10)
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !Find [authentik_policies_expression.expressionpolicy, [name, sestante-accesso-piattaforme]]
+      target: !Find [authentik_core.application, [slug, <slug>]]
 ```
+
+Il binding della policy `sestante-accesso-piattaforme` non è facoltativo, va messo anche se la
+piattaforma non usa gli inviti. Se la piattaforma deve invitare persone nuove, al blueprint si
+aggiungono anche l'account di servizio e il token (§ 10.1).
 
 `implicit-consent` = nessuna schermata "autorizza l'app": è voluto, sono piattaforme interne.
 
@@ -311,12 +323,159 @@ nella unit systemd): serve solo a runtime, al momento del login.
 - [ ] header proxy e impostazioni HTTPS conformi a `INTEGRAZIONE.md` del frontend
 - [ ] nessun riferimento residuo a `agescicampania.org` (issuer, redirect, email)
 - [ ] guida utente della piattaforma aggiornata (come si entra con SSO, cosa cambia per la MFA)
+- [ ] se la piattaforma invita persone nuove: inviti come da § 10, token solo in `.env`
 
 ## 9. Registro applicazioni
 
 | Piattaforma | Slug | Redirect URI | Blueprint | Stato |
 |---|---|---|---|---|
 | Plancia | `plancia` | `https://plancia.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-plancia.yaml` | blueprint pronto, piattaforma da reinstallare sul nuovo server |
-| Tana | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | attivo; immagine del profilo (scope `avatar`) da Tana v1.0.6 |
+| Tana | `tana` | `https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/callback/` | `provider-tana.yaml` | attivo; immagine del profilo (scope `avatar`) da Tana v1.0.6; inviti (§ 10): account `svc-tana` pronto, integrazione in Tana da fare |
 
 Aggiornare la tabella (nel repo `sestante`) a ogni nuova piattaforma collegata.
+
+## 10. Inviti dalla piattaforma (facoltativo)
+
+Serve quando chi ha un ruolo locale sulla piattaforma (es. il responsabile della base su Tana)
+deve dare accesso a una persona che non ha ancora un account Sestante. La piattaforma chiede a
+Sestante un **invito** per quell'email e manda alla persona il link. La persona crea l'account
+(password e secondo fattore) e al primo login SSO la piattaforma la collega per email (§ 6
+punto 2). Funzionamento lato Sestante: `docs/INVITI-PIATTAFORME.md`.
+
+**L'account creato da un invito vale solo per la piattaforma che l'ha chiesto.** Sestante ricava
+la piattaforma dal token usato, non dai dati inviati, e nega a quell'utente l'accesso alle altre
+piattaforme. Solo la segreteria di Sestante può allargarlo.
+
+### 10.1 Cosa preparare per l'utente
+
+Nel blueprint della piattaforma (§ 4), dopo il binding della policy. Il ruolo è **uno per
+piattaforma**: i permessi sugli inviti creati vanno al ruolo, quindi con un ruolo condiviso le
+piattaforme vedrebbero e revocherebbero gli inviti altrui. Sestante accetta un invito solo se
+l'account che l'ha creato ha il ruolo `inviti-<slug>` della piattaforma di `attributes.piattaforma`.
+Esempio completo, già validato: `blueprints/provider-tana.yaml`.
+
+```yaml
+  - model: authentik_rbac.role
+    id: ruolo-inviti-<slug>
+    identifiers:
+      name: inviti-<slug>
+    attrs:
+      permissions:
+        - authentik_stages_invitation.add_invitation
+
+  # Vista e revoca dei soli inviti creati dalla piattaforma
+  - model: authentik_rbac.initialpermissions
+    identifiers:
+      name: inviti-<slug> - inviti creati
+    attrs:
+      role: !KeyOf ruolo-inviti-<slug>
+      permissions:
+        - !Find [auth.permission, [content_type__app_label, authentik_stages_invitation], [codename, view_invitation]]
+        - !Find [auth.permission, [content_type__app_label, authentik_stages_invitation], [codename, delete_invitation]]
+
+  # Vista del flusso di iscrizione, per leggerne il pk (§ 10.2)
+  - model: authentik_flows.flow
+    identifiers:
+      slug: sestante-iscrizione-invito
+    permissions:
+      - permission: authentik_flows.view_flow
+        role: !KeyOf ruolo-inviti-<slug>
+
+  - model: authentik_core.user
+    id: svc-<slug>
+    identifiers:
+      username: svc-<slug>
+    attrs:
+      name: <Nome> - inviti
+      type: service_account
+      path: servizi/piattaforme
+      is_active: true
+      attributes:
+        piattaforma: <slug>          # uguale allo slug dell'applicazione
+      roles:
+        - !KeyOf ruolo-inviti-<slug>
+
+  # La chiave la genera Authentik: l'utente la copia in .env come SESTANTE_INVITI_TOKEN
+  - model: authentik_core.token
+    identifiers:
+      identifier: svc-<slug>-inviti
+    attrs:
+      user: !KeyOf svc-<slug>
+      intent: api
+      expiring: false
+      description: <Nome> - creazione degli inviti su Sestante
+```
+
+Nella piattaforma: variabile `SESTANTE_INVITI_TOKEN=` vuota in `.env.template`, con un commento
+che dice dove recuperarla: <https://auth.agescicampania.net/if/admin/#/core/tokens>, token
+`svc-<slug>-inviti`, copia. Senza token la piattaforma funziona lo stesso e non crea inviti:
+assegna il ruolo locale e mostra a chi lo assegna che la persona deve farsi creare l'account
+dalla segreteria.
+
+### 10.2 Chiamate
+
+Sempre all'**URL pubblico** `https://auth.agescicampania.net` (mai l'alias Docker), con
+`Authorization: Bearer <SESTANTE_INVITI_TOKEN>`.
+
+1. **pk del flusso** di iscrizione (si può tenere in cache):
+   `GET /api/v3/flows/instances/sestante-iscrizione-invito/` → campo `pk`.
+2. **Creazione dell'invito**:
+
+```
+POST /api/v3/stages/invitation/invitations/
+{
+  "name": "<slug>-<stringa casuale>",       # solo lettere, numeri, - e _
+  "flow": "<pk del punto 1>",
+  "single_use": false,
+  "expires": "<adesso + 7 giorni, ISO 8601 con fuso>",
+  "fixed_data": {
+    "email": "persona@example.org",
+    "username": "persona@example.org",
+    "name": "Nome Cognome",
+    "attributes.invito": {"piattaforma": "<slug>", "richiesto_da": "responsabile@example.org"}
+  }
+}
+```
+
+   La risposta (201) contiene `pk`, cioè il token dell'invito.
+3. **Revoca** (es. ruolo tolto prima che la persona si iscriva):
+   `DELETE /api/v3/stages/invitation/invitations/<pk>/`. Una piattaforma vede e revoca solo i
+   propri inviti.
+
+Regole:
+
+- In `fixed_data` sono ammesse **solo** `email`, `username` (uguale all'email), `name` (se noto)
+  e `attributes.invito`. Con qualunque altra chiave, gruppi compresi, l'invito viene rifiutato
+  quando la persona apre il link.
+- `expires` è obbligatoria, al massimo 31 giorni. Consigliati 7.
+- `single_use: false`: se la persona chiude la pagina a metà può riaprire lo stesso link. Una
+  volta creato l'account, il link non funziona più.
+- La creazione dell'invito riesce anche se l'email ha già un account Sestante: la piattaforma
+  non può saperlo, perché non vede gli utenti. In quel caso, quando la persona apre il link,
+  Sestante le dice di entrare con «Accedi con SSO AGESCI Campania». Per la piattaforma non
+  cambia niente: il collegamento per email le dà il ruolo comunque.
+
+### 10.3 Email alla persona
+
+La manda **la piattaforma**, con il suo testo («X ti ha dato accesso a <Nome> come …»). Contiene:
+
+- il link `https://auth.agescicampania.net/if/flow/sestante-iscrizione-invito/?itoken=<pk dell'invito>`
+  e la sua scadenza;
+- cosa succede dopo: si sceglie una password e si configura un secondo fattore (app di
+  autenticazione o passkey), poi si entra nella piattaforma con «Accedi con SSO AGESCI Campania»;
+- per chi ha già un account Sestante con quell'email: nessun link da usare, basta entrare con SSO.
+
+### 10.4 Comportamento richiesto alla piattaforma
+
+1. Solo chi ha il permesso locale previsto dalla piattaforma può invitare, e può assegnare solo
+   **ruoli locali**. I ruoli globali restano quelli del claim `groups`, decisi su Sestante.
+2. Prima di creare l'invito: utente locale pre-registrato con quell'email (senza password
+   locale) e ruolo assegnato. Poi l'invito, poi l'email.
+3. Errore della chiamata (4xx/5xx o Sestante non raggiungibile): messaggio a chi invitava,
+   nessun nuovo tentativo automatico. Ruolo e pre-registrazione restano. Da registrare nel log:
+   stato HTTP e corpo della risposta, **mai** il token.
+4. Tenere il `pk` dell'invito accanto alla pre-registrazione, per revocarlo se il ruolo viene
+   tolto prima dell'iscrizione e per rimandare l'email (stesso link finché non scade, altrimenti
+   un invito nuovo).
+5. Un invitato che prova a entrare in un'altra piattaforma riceve il diniego da Sestante.
+   Quella piattaforma non deve gestire niente.

@@ -11,5 +11,5 @@ source scripts/_comune.sh
 
 richiedi_comandi docker
 docker compose exec -T worker ak shell -c "$(cat scripts/permessi_gestione_utenti.py)" 2>/dev/null \
-	| grep -E '^(Permessi|Ruolo) ' \
+	| grep -E '^(Permessi|Ruolo|Invitati) ' \
 	|| errore "Allineamento permessi gestione-utenti non riuscito: docker compose exec worker ak shell -c \"\$(cat scripts/permessi_gestione_utenti.py)\""

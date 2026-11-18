@@ -67,6 +67,13 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   `scripts/_sestante.sh` (`AVATAR_MODI`) a ogni installazione/aggiornamento.
   Verso le piattaforme: scope OIDC `avatar` (`blueprints/scope-avatar.yaml`, claim `picture` come
   data-URI solo in `userinfo`), regole in `docs/INTEGRAZIONE-SSO.md` § 5.1 e § 6 punto 7.
+- Inviti dalle piattaforme: `blueprints/inviti-piattaforme.yaml` (flow `sestante-iscrizione-invito`,
+  policy `sestante-accesso-piattaforme` legata a ogni applicazione nel suo `provider-<slug>.yaml`;
+  lì anche, per chi invita, ruolo `inviti-<slug>` (uno per piattaforma: i permessi sugli inviti
+  creati vanno al ruolo), account `svc-<slug>` e token). Gli invitati
+  entrano solo nella piattaforma che li ha invitati (`attributes.piattaforme_consentite`). Inviti
+  non monouso, con scadenza; l'email la manda la piattaforma. Regole in `docs/INVITI-PIATTAFORME.md`,
+  contratto in `docs/INTEGRAZIONE-SSO.md` § 10.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
 - Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
   agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se

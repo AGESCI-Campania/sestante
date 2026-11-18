@@ -38,3 +38,10 @@ entries:
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, Plancia AGESCI Campania]]
       policy_engine_mode: any
       meta_launch_url: "https://plancia.agescicampania.net/accounts/oidc/sestante/login/?next=/"
+
+  # Utenti invitati da un'altra piattaforma: niente accesso (inviti-piattaforme.yaml)
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !Find [authentik_policies_expression.expressionpolicy, [name, sestante-accesso-piattaforme]]
+      target: !Find [authentik_core.application, [slug, plancia]]

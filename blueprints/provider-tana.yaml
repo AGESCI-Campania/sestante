@@ -38,3 +38,65 @@ entries:
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, Tana AGESCI Campania]]
       policy_engine_mode: any
       meta_launch_url: "https://baseaiello.agescicampania.net/accounts/oidc/sestante/login/?next=/gestione/"
+
+  # Utenti invitati da un'altra piattaforma: niente accesso (inviti-piattaforme.yaml)
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !Find [authentik_policies_expression.expressionpolicy, [name, sestante-accesso-piattaforme]]
+      target: !Find [authentik_core.application, [slug, tana]]
+
+  # --- Inviti creati da Tana (inviti-piattaforme.yaml, docs/INVITI-PIATTAFORME.md) ---
+  # Ruolo della sola Tana: i permessi sugli inviti creati vanno al ruolo, quindi un ruolo per
+  # piattaforma (con uno condiviso le piattaforme vedrebbero e revocherebbero gli inviti altrui).
+  - model: authentik_rbac.role
+    id: ruolo-inviti-tana
+    identifiers:
+      name: inviti-tana
+    attrs:
+      permissions:
+        - authentik_stages_invitation.add_invitation
+
+  - model: authentik_rbac.initialpermissions
+    identifiers:
+      name: inviti-tana - inviti creati
+    attrs:
+      role: !KeyOf ruolo-inviti-tana
+      permissions:
+        - !Find [auth.permission, [content_type__app_label, authentik_stages_invitation], [codename, view_invitation]]
+        - !Find [auth.permission, [content_type__app_label, authentik_stages_invitation], [codename, delete_invitation]]
+
+  # Vista del flusso di iscrizione, per leggerne il pk
+  - model: authentik_flows.flow
+    identifiers:
+      slug: sestante-iscrizione-invito
+    permissions:
+      - permission: authentik_flows.view_flow
+        role: !KeyOf ruolo-inviti-tana
+
+  # attributes.piattaforma = slug dell'applicazione: diventa l'unica piattaforma consentita
+  # agli utenti invitati da questo account (insieme al ruolo inviti-tana).
+  - model: authentik_core.user
+    id: svc-tana
+    identifiers:
+      username: svc-tana
+    attrs:
+      name: Tana - inviti
+      type: service_account
+      path: servizi/piattaforme
+      is_active: true
+      attributes:
+        piattaforma: tana
+      roles:
+        - !KeyOf ruolo-inviti-tana
+
+  # La chiave la genera Authentik: recuperarla da Directory → Tokens and App passwords →
+  # svc-tana-inviti → copia, e metterla in /opt/prenotazionebase/.env come SESTANTE_INVITI_TOKEN.
+  - model: authentik_core.token
+    identifiers:
+      identifier: svc-tana-inviti
+    attrs:
+      user: !KeyOf svc-tana
+      intent: api
+      expiring: false
+      description: Tana - creazione degli inviti su Sestante

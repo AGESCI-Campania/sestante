@@ -11,6 +11,7 @@ BLUEPRINTS=(
 	local/flow-authn-mfa.yaml
 	local/brand.yaml
 	local/scope-avatar.yaml
+	local/inviti-piattaforme.yaml
 	local/provider-plancia.yaml
 	local/provider-tana.yaml
 	local/traduzioni.yaml
