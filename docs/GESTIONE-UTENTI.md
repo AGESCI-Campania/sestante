@@ -62,6 +62,14 @@ servono, valutare prima l'effetto di questo limite.
   `piattaforme_consentite`): entrano solo nella piattaforma che li ha invitati. Per allargare
   l'accesso la segreteria toglie l'attributo (o aggiunge lo slug di un'altra piattaforma) e solo
   dopo assegna eventuali ruoli globali. Vedi [INVITI-PIATTAFORME.md](INVITI-PIATTAFORME.md).
+- **Utente che non riesce ad accedere** (password dimenticata, telefono con l'app dei codici
+  perso): mandargli [AIUTO-ACCESSO.md](AIUTO-ACCESSO.md). Con il link di recupero via email
+  entra senza secondo fattore e poi sostituisce da solo il dispositivo nelle impostazioni.
+  Serve un intervento solo se non può più leggere la sua email. In quel caso, dopo aver
+  verificato l'identità per un altro canale (telefono, di persona; mai fidarsi della sola email
+  o di un messaggio), la segreteria corregge l'email dell'utente e gli manda il link di recupero.
+  Eliminare i dispositivi MFA di un utente spetta solo agli amministratori, perché il ruolo
+  `gestione-utenti` non ha permessi sui dispositivi.
 - **Verifica a mano dei permessi**: [agesci] `cd /opt/sestante && scripts/permessi_gestione_utenti.sh`
   stampa quanti utenti sono gestibili dalla segreteria e quanti esclusi, e quanti invitati
   dalle piattaforme hanno gruppi o ruoli non previsti.

@@ -74,6 +74,9 @@ d'ambiente, Blueprints/API di Authentik), non scrittura di codice applicativo.
   entrano solo nella piattaforma che li ha invitati (`attributes.piattaforme_consentite`). Inviti
   non monouso, con scadenza; l'email la manda la piattaforma. Regole in `docs/INVITI-PIATTAFORME.md`,
   contratto in `docs/INTEGRAZIONE-SSO.md` § 10.
+- Guida per gli utenti che non riescono ad accedere: `docs/AIUTO-ACCESSO.md`. Le immagini in
+  `docs/img/aiuto-accesso/` sono generate da un'istanza di prova locale con
+  `scripts/screenshot-guida/` (procedura nel suo README). Rifarle se cambiano flow, brand o versione.
 - Nuovo blueprint: aggiungerlo all'elenco `BLUEPRINTS` in `scripts/_sestante.sh`.
 - Collegamento di una piattaforma client: `docs/INTEGRAZIONE-SSO.md` è il contratto verso gli
   agenti degli altri repo (endpoint, claim, blueprint Provider, comportamento richiesto); se

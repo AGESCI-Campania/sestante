@@ -23,6 +23,7 @@ d'ambiente, Blueprints) — non è un'applicazione Django custom.
 - [`docs/GESTIONE-UTENTI.md`](docs/GESTIONE-UTENTI.md) — cosa può fare la segreteria regionale (gruppo `gestione-utenti`)
 - [`docs/INVITI-PIATTAFORME.md`](docs/INVITI-PIATTAFORME.md) — inviti creati dalle piattaforme, account validi per la sola piattaforma che invita
 - [`docs/LOGIN-SOCIAL.md`](docs/LOGIN-SOCIAL.md) — accesso con Google e Apple: configurazione sui portali, attivazione, verifica
+- [`docs/AIUTO-ACCESSO.md`](docs/AIUTO-ACCESSO.md) — **guida per gli utenti** che non riescono ad accedere (password dimenticata, telefono perso), con screenshot
 
 ## Installazione e aggiornamento
 
